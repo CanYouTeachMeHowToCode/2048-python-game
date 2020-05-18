@@ -12,14 +12,25 @@ class AI(object):
 
     def move(self):
         if self.level == "easy":
+            step = 0
             while not self.GameBoard.GameOver():
                 self.getMaxMove1()
+                step += 1
+                print("step:%d\n" % step)
+
+        elif self.level == "normal": 
+            step = 0
+            while not self.GameBoard.GameOver():
+                self.getMaxMove10()
+                step += 1
+                print("step:%d\n" % step)
+
 
     def getMaxMove1(self):
         originalBoard = copy.deepcopy(self.GameBoard.board)
         originalScore = self.GameBoard.score
         assert(not self.GameBoard.GameOver())
-        
+
         upScore = downScore = leftScore = rightScore = 0
         if self.GameBoard.moveUp() : upScore = self.GameBoard.score - originalScore
         self.GameBoard.board = originalBoard
@@ -64,6 +75,9 @@ class AI(object):
         self.GameBoard.addNewTile() # add a new number after each move
         print("board after adding:")
         self.GameBoard.printBoard()
+
+    def getMaxMove10(self):
+        
 
 # test
 if __name__ == "__main__":

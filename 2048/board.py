@@ -14,8 +14,9 @@ class Board(object):
 
         # start coordinates 
         startIndex = (random.randint(0, size-1), random.randint(0, size-1)) 
-        # start number can be 2 or 4, 2 with higher probability
-        startNum = random.choice([2, 2, 2, 2, 2, 2, 2, 4, 2, 2])
+        # start number can be 2 or 4
+        # 2 occurs 80% and 4 occurs 20%
+        startNum = random.choice([2, 2, 2, 2, 2, 2, 2, 4, 4, 2])
 
         self.board[startIndex[0]][startIndex[1]] = startNum
 
@@ -32,7 +33,8 @@ class Board(object):
                 if not self.board[i][j]: # this tile is empty
                     emptyTiles.append((i, j))
         addIndex = random.choice(emptyTiles)
-        addNum = random.choice([2, 2, 2, 2, 2, 2, 2, 4, 2, 2])
+        # 2 occurs 80% and 4 occurs 20%
+        addNum = random.choice([2, 2, 2, 2, 2, 2, 2, 4, 4, 2])
         self.board[addIndex[0]][addIndex[1]] = addNum
 
     def isSameBoard(self, board1, board2):
@@ -133,7 +135,7 @@ class Board(object):
     def GameOver(self):
         board = copy.deepcopy(self.board)
         originalScore = self.score
-        # the plyaer get 2048
+        # the player get 2048
         for i in range(self.size):
             for j in range(self.size):
                 if board[i][j] == 2048: 
