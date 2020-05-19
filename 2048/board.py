@@ -146,17 +146,23 @@ class Board(object):
     # the game is over once the player reach the number 2048 or 
     # cannot make any legal move on the board
     def GameOver(self, board):
+        originalScore = self.score
+        originalBoard = copy.deepcopy(board)
         # the player get 2048
-        
-        # if self.contains2048(board)
-        #     print("\nCongratulations! you get 2048 and win!\n")
-        #     return True
+        if self.contains2048(board):
+            print("\nCongratulations! you get 2048 and win!\n")
+            return True
 
         # the player cannot make any legal move before getting 2048
         ((canMoveUp, _), (canMoveDown, _), (canMoveLeft, _), (canMoveRight, _)) \
             = (self.moveUp(board), self.moveDown(board), self.moveLeft(board), self.moveRight(board))
-        if not (canMoveUp or canMoveDown or canMoveLeft or canMoveRight): return True
-        else: return False
+        if not (canMoveUp or canMoveDown or canMoveLeft or canMoveRight):
+            print("\nYou don't have any legal moves! Game Over!") 
+            return True
+        else: 
+            self.score = originalScore
+            self.board = originalBoard
+            return False
 
 
 
@@ -263,8 +269,6 @@ if __name__ == "__main__":
         if canMove: gameBoard.board = gameBoard.addNewTile(gameBoard.board)
         else: print("cannot move in this direction") 
         gameBoard.printBoard()
-
-    print("Game over!\n\n")
 
 #     print("----------------------------------------------------------------")
 #     print("move with commands:")

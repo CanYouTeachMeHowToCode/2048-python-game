@@ -1,6 +1,7 @@
 ## 2048 game user interface (UI), using tkinter
 from tkinter import *
 from board import Board
+#from AI import AI
 import copy
 
 class UI(object):
@@ -12,7 +13,7 @@ class UI(object):
         data.size = self.size
         data.margin = 25
         data.titlePlace = 150
-        data.cellSize = 135
+        data.cellSize = (data.width - data.margin * 2) / data.size
         data.GameOver = False
         data.timeCounter = 0
         data.timerDelay = 1000
@@ -39,25 +40,31 @@ class UI(object):
         pass
 
     def keyPressed(self, event, data):
-        if not self.GameBoard.GameOver():
+        if not self.GameBoard.GameOver(self.GameBoard.board):
             canMove = False
             direction = event.keysym
             if direction == "Up": 
-                canMoveUp = self.GameBoard.moveUp()
+                canMoveUp, board = self.GameBoard.moveUp(self.GameBoard.board)
                 canMove = canMoveUp
+                self.GameBoard.board = board
             elif direction == "Down":
-                canMoveDown = self.GameBoard.moveDown()
+                canMoveDown, board = self.GameBoard.moveDown(self.GameBoard.board)
                 canMove = canMoveDown
+                self.GameBoard.board = board
             elif direction == "Left":
-                canMoveLeft = self.GameBoard.moveLeft()
+                canMoveLeft, board = self.GameBoard.moveLeft(self.GameBoard.board)
                 canMove = canMoveLeft
+                self.GameBoard.board = board
             elif direction == "Right":
-                canMoveRight = self.GameBoard.moveRight()
+                canMoveRight, board = self.GameBoard.moveRight(self.GameBoard.board)
                 canMove = canMoveRight
+                self.GameBoard.board = board
             # add a new number after each legal move
-            if canMove: self.GameBoard.addNewTile() 
+            if canMove: 
+                board = self.GameBoard.addNewTile(self.GameBoard.board) 
+                self.GameBoard.board = board
             else: print("cannot move in this direction") 
-            # self.GameBoard.printBoard()
+            self.GameBoard.printBoard()
         else:
             data.GameOver = True
             print("Game Over!")
