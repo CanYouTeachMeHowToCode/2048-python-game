@@ -13,17 +13,12 @@ class AI(object):
 
     def move(self):
         if self.level == "easy": self.getMaxMove1()
-        elif self.level == "normal": 
-            step = 0
-            while not self.GameBoard.GameOver():
-                step += 1
-                print("step:%d" % step)
-                self.expectiMiniMax()
-            print("Game Over")
+        elif self.level == "normal": self.expectiMiniMax()
 
     # using simple algorithm that only counts the current step that can reach 
     # the highest score
     def getMaxMove1(self):
+        # maxie move
         originalBoard = copy.deepcopy(self.GameBoard.board)
         originalScore = self.GameBoard.score
         assert(not self.GameBoard.GameOver())
@@ -66,6 +61,7 @@ class AI(object):
             print("should not reach here!")
             assert(False)
 
+        # (fake computer minie move)
         self.GameBoard.addNewTile() # add a new number after each move
         self.GameBoard.printBoard()
 
@@ -74,14 +70,17 @@ class AI(object):
 
     # def expectiMiniMax(self, board, computer, depth = 3):
 
+    def playTheGame(self):
+        step = 0
+        while not self.GameBoard.GameOver():
+            step += 1
+            print("step:%d" % step)
+            self.move()
+        print("Game Over")
+
 
 # test
 if __name__ == "__main__":
     easyAI = AI(4, 0)
-    step = 0
-    while not easyAI.GameBoard.GameOver():
-        step += 1
-        print("step:%d" % step)
-        easyAI.move()
-    print("Game Over")
+    easyAI.playTheGame()
 
