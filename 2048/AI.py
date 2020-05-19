@@ -9,7 +9,25 @@ class AI(object):
         self.size = size
         self.GameBoard = Board(self.size)
         self.level = ["easy", "normal", "hard"][level]
-        # self.weightBoard = 
+
+        # weight board assign the grids on board with weight 
+        # in zigzag order increasing exponentially with base 4
+        # e.g. for a weight board with size 4, the board weight is 
+            # [[4^0,   4^1,  4^2,   4^3],
+            #  [4^7,   4^6,  4^5,   4^4],
+            #  [4^8,   4^9,  4^10, 4^11],
+            #  [4^15, 4^14,  4^13, 4^12]]
+        # Reference: http://cs229.stanford.edu/proj2016/report/NieHouAn-AIPlays2048-report.pdf
+        def weightBoard(size):
+            board = [[(row * size + col) for col in range(size)] for row in range(size)]
+            for row in range(size):
+                if row % 2 : board[row] = board[row][::-1]
+            for row in range(size):
+                for col in range(size):
+                    exp = board[row][col]
+                    board[row][col] = 4 ** exp
+            return board
+        self.weightBoard = weightBoard(self.size)
 
     def move(self):
         if self.level == "easy": self.getMaxMove1()
@@ -18,10 +36,10 @@ class AI(object):
     # using simple algorithm that only counts the current step that can reach 
     # the highest score
     def getMaxMove1(self):
+        assert(not self.GameBoard.GameOver())
         # maxie move
         originalBoard = copy.deepcopy(self.GameBoard.board)
         originalScore = self.GameBoard.score
-        assert(not self.GameBoard.GameOver())
 
         upScore = downScore = leftScore = rightScore = 0
         if self.GameBoard.moveUp() : upScore = self.GameBoard.score - originalScore
@@ -83,4 +101,8 @@ class AI(object):
 if __name__ == "__main__":
     easyAI = AI(4, 0)
     easyAI.playTheGame()
+
+    # normalAI = AI(4, 1)
+    # normalAI.playTheGame()
+
 
