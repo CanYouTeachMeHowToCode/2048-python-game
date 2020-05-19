@@ -49,6 +49,7 @@ class Board(object):
 
     def moveLeft(self, board):
         check = copy.deepcopy(board)
+        res = copy.deepcopy(board)
         for row in range(self.size):
             if not list(filter (lambda x: x != self.empty, self.board[row])):
                 pass # ignore empty rows
@@ -57,29 +58,29 @@ class Board(object):
                 col = 0
                 while col < self.size-1:
                     for nextCol in range(col+1, self.size):
-                        if ((board[row][col] != self.empty) # a number
-                            and (board[row][col] == board[row][nextCol])
+                        if ((res[row][col] != self.empty) # a number
+                            and (res[row][col] == res[row][nextCol])
                             # the tiles between the two same numbers are all empty
                             # or there're no tiles between them (i.e. two numbers are consecutive)
-                            and (not list(filter (lambda x: x != self.empty, board[row][(col+1):nextCol])))): 
-                            currNum = board[row][col]
-                            board[row][col] = currNum * 2
-                            self.score += board[row][col]
-                            board[row][nextCol] = self.empty
+                            and (not list(filter (lambda x: x != self.empty, res[row][(col+1):nextCol])))): 
+                            currNum = res[row][col]
+                            res[row][col] = currNum * 2
+                            self.score += res[row][col]
+                            res[row][nextCol] = self.empty
                             col = nextCol
                             break
                     col += 1
 
                 # move numbers to left all empty tiles on the left
-                nums = list(filter (lambda x: x != self.empty, board[row]))
+                nums = list(filter (lambda x: x != self.empty, res[row]))
                 newRow = nums + [0] * (self.size - len(nums))
-                board[row] = newRow
+                res[row] = newRow
 
         # return False if this move cannot be processed (i.e. the board after
         # moving is the same as the original one), else return True
-        if self.isSameBoard(check, board): 
-            return (False, board)
-        return (True, board)
+        if self.isSameBoard(check, res): 
+            return (False, res)
+        return (True, res)
  
     # if we rotate the board 90˚ clockwise, move left and rotate 90° counterclockwise back, 
     # the new board is equivalent to the original board move down.
