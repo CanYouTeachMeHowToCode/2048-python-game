@@ -26,16 +26,17 @@ class Board(object):
         for i in range(self.size):
             print(board[i], "\n")
 
-    def addNewTile(self):
+    def addNewTile(self, board):
         emptyTiles = [] # tuple list => empty tile coordinates
         for i in range(self.size):
             for j in range(self.size):
-                if not self.board[i][j]: # this tile is empty
+                if not board[i][j]: # this tile is empty
                     emptyTiles.append((i, j))
         addIndex = random.choice(emptyTiles)
         # 2 occurs 80% and 4 occurs 20%
         addNum = random.choice([2, 2, 2, 2, 2, 2, 2, 4, 4, 2])
-        self.board[addIndex[0]][addIndex[1]] = addNum
+        board[addIndex[0]][addIndex[1]] = addNum
+        return board
 
     def isSameBoard(self, board1, board2):
         if len(board1) != len(board2): return False
@@ -46,8 +47,8 @@ class Board(object):
                     if board1[i][j] != board2[i][j]: return False
             return True
 
-    def moveLeft(self):
-        check = copy.deepcopy(self.board)
+    def moveLeft(self, board):
+        check = copy.deepcopy(board)
         for row in range(self.size):
             if not list(filter (lambda x: x != self.empty, self.board[row])):
                 pass # ignore empty rows
@@ -56,79 +57,84 @@ class Board(object):
                 col = 0
                 while col < self.size-1:
                     for nextCol in range(col+1, self.size):
-                        if ((self.board[row][col] != self.empty) # a number
-                            and (self.board[row][col] == self.board[row][nextCol])
+                        if ((board[row][col] != self.empty) # a number
+                            and (board[row][col] == board[row][nextCol])
                             # the tiles between the two same numbers are all empty
                             # or there're no tiles between them (i.e. two numbers are consecutive)
-                            and (not list(filter (lambda x: x != self.empty, self.board[row][(col+1):nextCol])))): 
-                            currNum = self.board[row][col]
-                            self.board[row][col] = currNum * 2
-                            self.score += self.board[row][col]
-                            self.board[row][nextCol] = self.empty
+                            and (not list(filter (lambda x: x != self.empty, board[row][(col+1):nextCol])))): 
+                            currNum = board[row][col]
+                            board[row][col] = currNum * 2
+                            self.score += board[row][col]
+                            board[row][nextCol] = self.empty
                             col = nextCol
                             break
                     col += 1
 
                 # move numbers to left all empty tiles on the left
-                nums = list(filter (lambda x: x != self.empty, self.board[row]))
+                nums = list(filter (lambda x: x != self.empty, board[row]))
                 newRow = nums + [0] * (self.size - len(nums))
-                self.board[row] = newRow
+                board[row] = newRow
 
         # return False if this move cannot be processed (i.e. the board after
         # moving is the same as the original one), else return True
-        if self.isSameBoard(check, self.board): 
-            return False
-        return True
+        if self.isSameBoard(check, board): 
+            return (False, board)
+        return (True, board)
  
     # if we rotate the board 90˚ clockwise, move left and rotate 90° counterclockwise back, 
     # the new board is equivalent to the original board move down.
 
     # rotate the board 90° clockwise is equivalent to transpose the board and 
     # mirror the board along the vertical axis
-    def transpose(self):
-        board = copy.deepcopy(self.board)
+    def transpose(self, board):
+        tempBoard = copy.deepcopy(board)
         for i in range(self.size):
             for j in range(self.size):
-                self.board[j][i] = board[i][j]
+                board[j][i] = tempBoard[i][j]
+        return board
 
-    def mirror(self):
-        board = copy.deepcopy(self.board)
+    def mirror(self, board):
+        tempBoard = copy.deepcopy(board)
         for i in range(self.size):
             for j in range(self.size):
-                self.board[i][j] = board[i][self.size-j-1]
+                board[i][j] = tempBoard[i][self.size-j-1]
+        return board
 
-    def rotate90Clockwise(self):
-        self.transpose()
-        self.mirror()
+    def rotate90Clockwise(self, board):
+        board = self.transpose(board)
+        board = self.mirror(board)
+        return board
 
-    def rotate180(self):
-        self.transpose()
-        self.mirror()
-        self.transpose()
-        self.mirror()
+    def rotate180(self, board):
+        board = self.transpose(board)
+        board = self.mirror(board)
+        board = self.transpose(board)
+        board = self.mirror(board)
+        return board
 
-    def rotate90CounterClockwise(self):
+    def rotate90CounterClockwise(self, board):
         for i in range(3):
-            self.transpose()
-            self.mirror()
+            board = self.transpose(board)
+            board = self.mirror(board)
+        return board
 
-    def moveDown(self):
-        self.rotate90Clockwise()
-        canMove = self.moveLeft()
-        self.rotate90CounterClockwise()
-        return canMove
+    def moveDown(self, board):
+        board = self.rotate90Clockwise(board)
+        (canMove, board) = self.moveLeft(board)
+        board = self.rotate90CounterClockwise(board)
+        return (canMove, board)
 
-    def moveUp(self):
-        self.rotate90CounterClockwise()
-        canMove = self.moveLeft()
-        self.rotate90Clockwise()
-        return canMove
+    def moveUp(self, board):
+        board = self.rotate90CounterClockwise(board)
+        (canMove, board) = self.moveLeft(board)
+        board = self.rotate90Clockwise(board)
+        return (canMove, board)
 
-    def moveRight(self):
-        self.rotate180()
-        canMove = self.moveLeft()
-        self.rotate180()
-        return canMove
+    def moveRight(self, board):
+        board = self.rotate180(board)
+        (canMove, board) = self.moveLeft(board)
+        board = self.rotate180(board)
+        return (canMove, board)
 
     def contains2048(self, board):
         for i in range(self.size):
@@ -139,9 +145,7 @@ class Board(object):
 
     # the game is over once the player reach the number 2048 or 
     # cannot make any legal move on the board
-    def GameOver(self):
-        board = copy.deepcopy(self.board)
-        originalScore = self.score
+    def GameOver(self, board):
         # the player get 2048
         
         # if self.contains2048(board)
@@ -149,14 +153,10 @@ class Board(object):
         #     return True
 
         # the player cannot make any legal move before getting 2048
-        (canMoveUp, canMoveDown, canMoveLeft, canMoveRight) = \
-            (self.moveUp(), self.moveDown(), self.moveLeft(), self.moveRight())
-        if not (canMoveUp or canMoveDown or canMoveLeft or canMoveRight):
-            return True
-        else:
-            self.board = board
-            self.score = originalScore
-            return False
+        ((canMoveUp, _), (canMoveDown, _), (canMoveLeft, _), (canMoveRight, _)) \
+            = (self.moveUp(board), self.moveDown(board), self.moveLeft(board), self.moveRight(board))
+        if not (canMoveUp or canMoveDown or canMoveLeft or canMoveRight): return True
+        else: return False
 
 
 
@@ -192,75 +192,79 @@ class Board(object):
 #         print("reach here after game is over!")
 
 
-# # test 
-# if __name__ == "__main__":
-#     board = Board(4)
-#     board.printBoard()
-#     board.addNewTile()
-#     board.printBoard()
-#     board.addNewTile()
-#     board.addNewTile()
-#     board.addNewTile()
-#     board.addNewTile()
-#     board.addNewTile()
-#     board.printBoard()
-#     print("after moving left:")
-#     board.moveLeft()
-#     board.printBoard()
+# test 
+if __name__ == "__main__":
+    gameBoard = Board(4)
+    gameBoard.printBoard()
+    gameBoard.board = gameBoard.addNewTile(gameBoard.board)
+    gameBoard.printBoard()
+    gameBoard.board = gameBoard.addNewTile(gameBoard.board)
+    gameBoard.board = gameBoard.addNewTile(gameBoard.board)
+    gameBoard.board = gameBoard.addNewTile(gameBoard.board)
+    gameBoard.board = gameBoard.addNewTile(gameBoard.board)
+    gameBoard.board = gameBoard.addNewTile(gameBoard.board)
+    gameBoard.printBoard()
+    print("after moving left:")
+    gameBoard.board = gameBoard.moveLeft(gameBoard.board)[1]
+    gameBoard.printBoard()
 
-#     board1 = copy.deepcopy(board)
-#     print("-----------after transpose:")
-#     board1.transpose()
-#     board1.printBoard()
-#     print("after mirror:")
-#     board1.mirror()
-#     board1.printBoard()
+    # board1 = copy.deepcopy(board)
+    # print("-----------after transpose:")
+    # board1.transpose()
+    # board1.printBoard()
+    # print("after mirror:")
+    # board1.mirror()
+    # board1.printBoard()
 
-#     print("------------after rotation:")
-#     board.rotate90Clockwise()
-#     board.printBoard()
+    # print("------------after rotation:")
+    # board.rotate90Clockwise()
+    # board.printBoard()
 
-#     print("------------rotate back:")
-#     board.rotate90CounterClockwise()
-#     board.printBoard()
+    # print("------------rotate back:")
+    # board.rotate90CounterClockwise()
+    # board.printBoard()
 
-#     print("after moving down:")
-#     board.moveDown()
-#     board.printBoard()
+    print("after moving down:")
+    gameBoard.board = gameBoard.moveDown(gameBoard.board)[1]
+    gameBoard.printBoard()
 
-#     print("after moving up:")
-#     board.moveUp()
-#     board.printBoard()
+    print("after moving Up:")
+    gameBoard.board = gameBoard.moveUp(gameBoard.board)[1]
+    gameBoard.printBoard()
 
-#     print("after moving right:")
-#     board.moveRight()
-#     board.printBoard()
+    print("after moving right:")
+    gameBoard.board = gameBoard.moveRight(gameBoard.board)[1]
+    gameBoard.printBoard()
 
-#     print("game over tests:")
-#     # test with infinite random moves
-#     board = Board(6)
-#     while not board.GameOver():
-#         canMove = False
-#         direction = random.choice(board.directionList)
-#         print("direction:", direction)
-#         if direction == "Up": 
-#             canMoveUp = board.moveUp()
-#             canMove = canMoveUp
-#         elif direction == "Down":
-#             canMoveDown = board.moveDown()
-#             canMove = canMoveDown
-#         elif direction == "Left":
-#             canMoveLeft = board.moveLeft()
-#             canMove = canMoveLeft
-#         elif direction == "Right":
-#             canMoveRight = board.moveRight()
-#             canMove = canMoveRight
-#         # add a new number after each legal move
-#         if canMove: board.addNewTile() 
-#         else: print("cannot move in this direction") 
-#         board.printBoard()
+    print("game over tests:")
+    # test with infinite random moves
+    gameBoard = Board(6)
+    while not gameBoard.GameOver(gameBoard.board):
+        canMove = False
+        direction = random.choice(gameBoard.directionList)
+        print("direction:", direction)
+        if direction == "Up": 
+            canMoveUp, board = gameBoard.moveUp(gameBoard.board)
+            gameBoard.board = board
+            canMove = canMoveUp
+        elif direction == "Down":
+            canMoveDown, board = gameBoard.moveDown(gameBoard.board)
+            gameBoard.board = board
+            canMove = canMoveDown
+        elif direction == "Left":
+            canMoveLeft, board = gameBoard.moveLeft(gameBoard.board)
+            gameBoard.board = board
+            canMove = canMoveLeft
+        elif direction == "Right":
+            canMoveRight, board = gameBoard.moveRight(gameBoard.board)
+            gameBoard.board = board
+            canMove = canMoveRight
+        # add a new number after each legal move
+        if canMove: gameBoard.board = gameBoard.addNewTile(gameBoard.board)
+        else: print("cannot move in this direction") 
+        gameBoard.printBoard()
 
-#     print("Game over!\n\n")
+    print("Game over!\n\n")
 
 #     print("----------------------------------------------------------------")
 #     print("move with commands:")
