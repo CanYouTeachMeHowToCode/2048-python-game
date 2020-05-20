@@ -34,18 +34,23 @@ class AI(object):
         if self.level == "easy": self.getMaxMove1()
         elif self.level == "normal": self.getMaxMove2()
 
-    def performAction(self, board, action):
+
+    def performAction(self, action):
         if action == 0:
             print("moving up")
+            # assert(self.GameBoard.moveUp(test)[0])
             self.GameBoard.moveUp()
         elif action == 1:
             print("moving down")
+            # assert(self.GameBoard.moveDown(test)[0])
             self.GameBoard.moveDown()
         elif action == 2:
             print("moving left")
+            # assert(self.GameBoard.moveLeft(test)[0])
             self.GameBoard.moveLeft()
         elif action == 3:
             print("moving right")
+            # assert(self.GameBoard.moveRight(test)[0])
             self.GameBoard.moveRight()
         else:
             print("should not reach here!")
@@ -56,34 +61,42 @@ class AI(object):
     def getMaxMove1(self):
         assert(not self.GameBoard.GameOver())
         # maxie move
-        originalBoard = copy.deepcopy(self.GameBoard.board)
         originalScore = self.GameBoard.score
+        upScore = downScore = leftScore = rightScore = -1
 
-        upScore = downScore = leftScore = rightScore = 0
-        if self.GameBoard.moveUp() : upScore = self.GameBoard.score - originalScore
-        self.GameBoard.board = originalBoard
+        boardU = copy.deepcopy(self.GameBoard.board)
+        boardD = copy.deepcopy(self.GameBoard.board)
+        boardL = copy.deepcopy(self.GameBoard.board)
+        boardR = copy.deepcopy(self.GameBoard.board)
+        canMoveUp = self.GameBoard.moveUp()
+        if canMoveUp: upScore = self.GameBoard.score - originalScore
+        self.GameBoard.board = boardU
         self.GameBoard.score = originalScore
 
-        if self.GameBoard.moveDown() : downScore = self.GameBoard.score - originalScore
-        self.GameBoard.board = originalBoard
+        canMoveDown = self.GameBoard.moveDown()
+        if canMoveUp: downScore = self.GameBoard.score - originalScore
+        self.GameBoard.board = boardD
         self.GameBoard.score = originalScore
 
-        if self.GameBoard.moveLeft() : leftScore = self.GameBoard.score - originalScore
-        self.GameBoard.board = originalBoard
+        canMoveLeft = self.GameBoard.moveLeft()
+        if canMoveLeft: leftScore = self.GameBoard.score - originalScore
+        self.GameBoard.board = boardL
         self.GameBoard.score = originalScore
 
-        if self.GameBoard.moveRight() : rightScore = self.GameBoard.score - originalScore
-        self.GameBoard.board = originalBoard
+        canMoveRight = self.GameBoard.moveRight()
+        if canMoveRight: rightScore = self.GameBoard.score - originalScore
+        self.GameBoard.board = boardR
         self.GameBoard.score = originalScore
 
         scoreList = [upScore, downScore, leftScore, rightScore]
         # moving each direction has the same score
         if (len(set(scoreList)) <= 1) : action = random.randint(0, 3)
         else: action = scoreList.index(max(scoreList))
+        print("action: %d\n" % action)
         self.performAction(action)
 
         # (fake computer minie move that just uses the normal method to add new numbers)
-        self.GameBoard.addNewTile() # add a new number after each move
+        self.GameBoard.addNewTile()
 
     # using ExpectiMiniMax algorithm. 
     # Reference : http://cs229.stanford.edu/proj2016/report/NieHouAn-AIPlays2048-report.pdf
@@ -197,19 +210,23 @@ class AI(object):
     def playTheGame(self):
         step = 0
         while not self.GameBoard.GameOver():
-            step += 1
-            print("step:%d" % step)
-            self.nextMove()
+            print("-------------------------------board before move:")
             self.GameBoard.printBoard()
+            step += 1
+            print("step:%d\n" % step)
+            self.nextMove()
+            print("\nboard after move:")
+            self.GameBoard.printBoard()
+            print("------------------------------------------------\n\n")
         print("Game Over")
 
 
 # test
 if __name__ == "__main__":
-    # easyAI = AI(4, 0)
-    # easyAI.playTheGame()
+    easyAI = AI(4, 0)
+    easyAI.playTheGame()
 
-    normalAI = AI(4, 1)
-    normalAI.playTheGame()
+    # normalAI = AI(4, 1)
+    # normalAI.playTheGame()
 
 

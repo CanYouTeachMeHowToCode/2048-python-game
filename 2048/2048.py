@@ -1,5 +1,4 @@
 ## 2048 game
-from tkinter import *
 from UI import UI
 
 class Game(object):

@@ -40,29 +40,19 @@ class UI(object):
         pass
 
     def keyPressed(self, event, data):
-        if not self.GameBoard.GameOver(self.GameBoard.board):
+        if not self.GameBoard.GameOver():
             canMove = False
             direction = event.keysym
             if direction == "Up": 
-                canMoveUp, board = self.GameBoard.moveUp(self.GameBoard.board)
-                canMove = canMoveUp
-                self.GameBoard.board = board
+                canMove = self.GameBoard.moveUp()
             elif direction == "Down":
-                canMoveDown, board = self.GameBoard.moveDown(self.GameBoard.board)
-                canMove = canMoveDown
-                self.GameBoard.board = board
+                canMove = self.GameBoard.moveDown()
             elif direction == "Left":
-                canMoveLeft, board = self.GameBoard.moveLeft(self.GameBoard.board)
-                canMove = canMoveLeft
-                self.GameBoard.board = board
+                canMove = self.GameBoard.moveLeft()
             elif direction == "Right":
-                canMoveRight, board = self.GameBoard.moveRight(self.GameBoard.board)
-                canMove = canMoveRight
-                self.GameBoard.board = board
+                canMove = self.GameBoard.moveRight()
             # add a new number after each legal move
-            if canMove: 
-                board = self.GameBoard.addNewTile(self.GameBoard.board) 
-                self.GameBoard.board = board
+            if canMove: self.GameBoard.addNewTile() 
             else: print("cannot move in this direction") 
             self.GameBoard.printBoard()
         else:
