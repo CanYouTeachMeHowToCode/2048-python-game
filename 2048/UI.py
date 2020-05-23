@@ -1,7 +1,7 @@
 ## 2048 game user interface (UI), using tkinter
 from tkinter import *
 from board import Board
-#from AI import AI
+from AI import AI
 import copy
 
 class UI(object):
@@ -10,14 +10,22 @@ class UI(object):
         self.GameBoard = Board(self.size)
 
     def init(self, data):
+        # board size settings
         data.size = self.size
         data.margin = 25
         data.titlePlace = 150
         data.cellSize = (data.width - data.margin * 2) / data.size
+
+        # game state settings (Game Over, Game Paused)
         data.reach2048 = False
         data.cannotMove = False
+        data.paused = False
+
+        # time settings
         data.timeCounter = 0
         data.timerDelay = 1000
+
+        # color settings
         data.colors = {0 : "#D7CCC8",
                        2 : "#FFFDE7", 
                        4 : "#FBC02D",
@@ -37,29 +45,60 @@ class UI(object):
                        65536 : "#039BE5",
                        131072 : "#0288D1"}
 
+        # AI settings
+        data.AImode = True # implement change in mode later
+        data.AIlevel = 2 # implement customization later
+        data.AI = AI(self.GameBoard, data.AIlevel)
+
     def mousePressed(self, event, data):
         pass
 
     def keyPressed(self, event, data):
-        if not self.GameBoard.GameOver():
-            canMove = False
-            direction = event.keysym
-            if direction == "Up": 
-                canMove = self.GameBoard.moveUp()
-            elif direction == "Down":
-                canMove = self.GameBoard.moveDown()
-            elif direction == "Left":
-                canMove = self.GameBoard.moveLeft()
-            elif direction == "Right":
-                canMove = self.GameBoard.moveRight()
-            # add a new number after each legal move
-            if canMove: self.GameBoard.addNewTile() 
-            else: print("cannot move in this direction") 
-            self.GameBoard.printBoard()
+        # pause the game (can be retrieved)
+        if event.keysym == "p":
+            data.paused = not data.paused 
+
+        # restart the game 
+        if event.keysym == "r" :
+            self.GameBoard = Board(self.size)
+            self.init(data)
+
+        # player cannot move in the AI mode
+        if data.AImode: 
+            # if event.keysym == "s":
+            #     print("AI start playing")
+            #     step = 0
+            #     while not self.GameBoard.GameOver():
+            #         data.AI.nextMove()
+            #         # update the board after each AI's move
+            #         self.GameBoard.board = data.AI.GameBoard.board 
+            #         self.GameBoard.printBoard()
+            #         step += 1
         else:
-            if self.GameBoard.contains2048(): data.reach2048 = True
-            else: data.cannotMove = True
-            print("Game Over!")
+            # making moves based on the user's pressing keys
+            if not self.GameBoard.GameOver():
+                canMove = False
+                if data.paused: 
+                    print("the game is paused now! you cannot move until the game is unpaused")
+                else:
+                    direction = event.keysym
+                    if direction == "Up": 
+                        canMove = self.GameBoard.moveUp()
+                    elif direction == "Down":
+                        canMove = self.GameBoard.moveDown()
+                    elif direction == "Left":
+                        canMove = self.GameBoard.moveLeft()
+                    elif direction == "Right":
+                        canMove = self.GameBoard.moveRight()
+
+                    # add a new number after each legal move
+                    if canMove: self.GameBoard.addNewTile() 
+                    else: print("cannot move in this direction") 
+                    self.GameBoard.printBoard()
+            else:
+                if self.GameBoard.contains2048(): data.reach2048 = True
+                else: data.cannotMove = True
+                print("Game Over!")
 
     def drawCell(self, canvas, data, row, col):
         #draw every cell
@@ -71,6 +110,9 @@ class UI(object):
         fill = data.colors[currNum], width = cellBoundsWidth)
 
     def drawBoard(self, canvas, data):
+        print("updating board: --------")
+        self.GameBoard.printBoard()
+        print("----------------------------------------------------------------")
         #draw the board by filling every cells(using draw cells)
         for row in range(data.size):
             for col in range(data.size):
@@ -98,6 +140,9 @@ class UI(object):
             canvas.create_text(data.width / 2, data.height / 2, \
                                text = "You LOSE", \
                                font = "Arial 50 bold", fill = "black")
+            canvas.create_text(data.width / 2, data.height * 0.75, \
+                   text = "press 'r' to restart", \
+                   font = "Arial 30 bold", fill = "purple")
 
     def redrawAll(self, canvas, data):
         canvas.create_rectangle(0, 0, data.width, data.height, fill = "#EFEBE9")
@@ -111,10 +156,19 @@ class UI(object):
                             text = "Score:" + str(self.GameBoard.score) ,\
                             font = "Arial 23 bold", fill = "purple")
         self.drawBoard(canvas, data)
+
+        # Game paused
+        if data.paused: 
+            canvas.create_rectangle(0, data.height/3, data.width, \
+                                            data.height*(2/3), fill = "gold")
+            canvas.create_text(data.width/2, data.height/2, text = "Game Paused!",\
+                                font = "TimesNewRoman 35 bold", fill = "red")
+
+        # Game over
         if data.reach2048 or data.cannotMove : self.drawGameOverPage(canvas, data)
 
     def timerFired(self, data):
-        if not (data.reach2048 or data.cannotMove):
+        if not (data.reach2048 or data.cannotMove) and not data.paused:
             data.timeCounter += 1
 
     def runGame(self, width, height): # tkinter starter code

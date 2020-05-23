@@ -5,9 +5,9 @@ import copy
 from board import Board
 
 class AI(object):
-    def __init__(self, size, level):
-        self.size = size
-        self.GameBoard = Board(self.size)
+    def __init__(self, GameBoard, level):
+        self.size = GameBoard.size
+        self.GameBoard = GameBoard
         self.level = ["easy", "normal", "hard"][level]
 
         # weight board assign the grids on board with weight 
@@ -315,7 +315,7 @@ class AI(object):
         self.GameBoard.addNewTile()
 
     def getMaxMove3(self):
-        (score, action) = self.expectiMaxieMoveAlphaBeta(5, -float('inf'), float('inf'))
+        (score, action) = self.expectiMaxieMoveAlphaBeta(6, -float('inf'), float('inf'))
         print("bestScore, bestAction:", (score, action))
         self.performAction(action)
 
@@ -342,13 +342,14 @@ class AI(object):
 
 # test
 if __name__ == "__main__":
+    testBoard = Board(4)
     # easyAI = AI(4, 0)
     # easyAI.playTheGame()
 
-    # normalAI = AI(4, 1)
-    # normalAI.playTheGame()
+    normalAI = AI(testBoard, 1)
+    normalAI.playTheGame()
 
-    hardAI = AI(4, 2)
-    hardAI.playTheGame()
+    # hardAI = AI(4, 2)
+    # hardAI.playTheGame()
 
 

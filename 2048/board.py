@@ -130,10 +130,10 @@ class Board(object):
         self.rotate180()
         return canMove
 
-    def contains2048(self, board):
+    def contains2048(self):
         for i in range(self.size):
             for j in range(self.size):
-                if board[i][j] == 2048: 
+                if self.board[i][j] == 2048: 
                     return True
         return False
 
@@ -142,11 +142,11 @@ class Board(object):
     def GameOver(self):
         # board = copy.deepcopy(self.board)
         originalScore = self.score
+
         # the player get 2048
-        
-        # if self.contains2048(board)
-        #     print("\nCongratulations! you get 2048 and win!\n")
-        #     return True
+        if self.contains2048():
+            print("\nCongratulations! you get 2048 and win!\n")
+            return True
 
         # the player cannot make any legal move before getting 2048
         boardU = copy.deepcopy(self.board)
@@ -258,7 +258,7 @@ if __name__ == "__main__":
 
     print("game over tests:")
     # test with infinite random moves
-    board = Board(4)
+    board = Board(6)
     while not board.GameOver():
         canMove = False
         direction = random.choice(board.directionList)
