@@ -14,7 +14,8 @@ class UI(object):
         data.margin = 25
         data.titlePlace = 150
         data.cellSize = (data.width - data.margin * 2) / data.size
-        data.GameOver = False
+        data.reach2048 = False
+        data.cannotMove = False
         data.timeCounter = 0
         data.timerDelay = 1000
         data.colors = {0 : "#D7CCC8",
@@ -56,7 +57,8 @@ class UI(object):
             else: print("cannot move in this direction") 
             self.GameBoard.printBoard()
         else:
-            data.GameOver = True
+            if self.GameBoard.contains2048(): data.reach2048 = True
+            else: data.cannotMove = True
             print("Game Over!")
 
     def drawCell(self, canvas, data, row, col):
@@ -80,6 +82,23 @@ class UI(object):
                         text = self.GameBoard.board[row][col], \
                         font = "Arial 45", fill = "black") 
 
+    def drawGameOverPage(self, canvas, data):
+        # draw the game over page
+
+        # reach 2048
+        if data.reach2048: 
+            canvas.create_rectangle(0, 0, data.width, data.height, fill = "#EEEBE9")
+            canvas.create_text(data.width / 2, data.height / 2, \
+                               text = "Congratulations! you get 2048 and win!", \
+                               font = "Arial 50 bold", fill = "red")
+
+        # cannot have any legal moves before reach 2048
+        elif data.cannotMove:
+            canvas.create_rectangle(0, 0, data.width, data.height, fill = "#EEEBE9")
+            canvas.create_text(data.width / 2, data.height / 2, \
+                               text = "You LOSE", \
+                               font = "Arial 50 bold", fill = "black")
+
     def redrawAll(self, canvas, data):
         canvas.create_rectangle(0, 0, data.width, data.height, fill = "#EFEBE9")
         canvas.create_text(data.width / 4, data.titlePlace / 2, 
@@ -92,9 +111,10 @@ class UI(object):
                             text = "Score:" + str(self.GameBoard.score) ,\
                             font = "Arial 23 bold", fill = "purple")
         self.drawBoard(canvas, data)
+        if data.reach2048 or data.cannotMove : self.drawGameOverPage(canvas, data)
 
     def timerFired(self, data):
-        if not data.GameOver:
+        if not (data.reach2048 or data.cannotMove):
             data.timeCounter += 1
 
     def runGame(self, width, height): # tkinter starter code
