@@ -170,46 +170,43 @@ class Board(object):
         self.board = boardR
         self.score = originalScore
 
-        print("for this board, the moving direction can be (Up, Down, Left, Right):", \
-                (canMoveUp, canMoveDown, canMoveLeft, canMoveRight))
-        print("\n")
+        # print("for this board, the moving direction can be (Up, Down, Left, Right):", \
+        #         (canMoveUp, canMoveDown, canMoveLeft, canMoveRight))
+        # print("\n")
         if not (canMoveUp or canMoveDown or canMoveLeft or canMoveRight):
             print("\nYou don't have any legal moves! Game Over!") 
             return True
         else: return False
 
-
-
-    
-#     # this function is used for terminal playing version
-#     def move(self):
-#         while 1:
-#             direction = input("moving direction (Up, Down, Left, Right): ")
-#             canMove = False
-#             if direction not in self.directionList: 
-#                 print("illegal move")
-#             else:
-#                 print("direction:", direction)
-#                 if direction == "Up": 
-#                     canMoveUp = self.moveUp()
-#                     canMove = canMoveUp
-#                 elif direction == "Down":
-#                     canMoveDown = self.moveDown()
-#                     canMove = canMoveDown
-#                 elif direction == "Left":
-#                     canMoveLeft = self.moveLeft()
-#                     canMove = canMoveLeft
-#                 elif direction == "Right":
-#                     canMoveRight = self.moveRight()
-#                     canMove = canMoveRight
-#                 # add a new number after each legal move
-#                 if canMove: self.addNewTile() 
-#                 else: print("cannot move in this direction") 
-#             self.printBoard()
-#             if self.GameOver(): 
-#                 print("Game Over!\n")
-#                 break
-#         print("reach here after game is over!")
+    # this function is used for terminal playing version
+    def move(self):
+        while 1:
+            direction = input("moving direction (Up, Down, Left, Right): ")
+            canMove = False
+            if direction not in self.directionList: 
+                print("illegal move")
+            else:
+                print("direction:", direction)
+                if direction == "Up": 
+                    canMoveUp = self.moveUp()
+                    canMove = canMoveUp
+                elif direction == "Down":
+                    canMoveDown = self.moveDown()
+                    canMove = canMoveDown
+                elif direction == "Left":
+                    canMoveLeft = self.moveLeft()
+                    canMove = canMoveLeft
+                elif direction == "Right":
+                    canMoveRight = self.moveRight()
+                    canMove = canMoveRight
+                # add a new number after each legal move
+                if canMove: self.addNewTile() 
+                else: print("cannot move in this direction") 
+            self.printBoard()
+            if self.GameOver(): 
+                print("Game Over!\n")
+                break
+        print("reach here after game is over!")
 
 
 # # test 
@@ -285,150 +282,9 @@ if __name__ == "__main__":
 #     board = Board(4)
 #     board.move()
 
-## below are tests for non-destructive functions
-
-    # gameBoard = Board(4)
-    # gameBoard.printBoard()
-    # gameBoard.board = gameBoard.addNewTile(gameBoard.board)
-    # gameBoard.printBoard()
-    # gameBoard.board = gameBoard.addNewTile(gameBoard.board)
-    # gameBoard.board = gameBoard.addNewTile(gameBoard.board)
-    # gameBoard.board = gameBoard.addNewTile(gameBoard.board)
-    # gameBoard.board = gameBoard.addNewTile(gameBoard.board)
-    # gameBoard.board = gameBoard.addNewTile(gameBoard.board)
-    # gameBoard.printBoard()
-    # print("after moving left:")
-    # gameBoard.board = gameBoard.moveLeft(gameBoard.board)[1]
-    # gameBoard.printBoard()
-
-    # non-destructive tests
-    # board1 = copy.deepcopy(gameBoard.board)
-    # print("board1(before): ", board1)
-    # print("-----------after transpose:")
-    # board2 = gameBoard.transpose(board1)
-    # print("board2: ", board2)
-    # print("board1(after):", board1)
-
-    # print("\n\n")
-    # board3 = copy.deepcopy(gameBoard.board)
-    # print("board3(before): ", board1)    
-    # print("-----------after mirror:")
-    # board4 = gameBoard.mirror(board3)
-    # print("board4: ", board4)
-    # print("board3(after): ", board3)
-
-    # print("\n\n")
-    # board5 = copy.deepcopy(gameBoard.board)
-    # print("board5(before): ", board5)    
-    # print("------------after CW rotation:")
-    # board6 = gameBoard.rotate90Clockwise(board5)
-    # print("board6: ", board6)
-    # print("board5(after): ", board5)   
-
-    # print("\n\n")
-    # board5 = copy.deepcopy(gameBoard.board)
-    # print("board5(before): ", board5)    
-    # print("------------after 180 rotation:")
-    # board6 = gameBoard.rotate180(board5)
-    # print("board6: ", board6)
-    # print("board5(after): ", board5) 
-
-    # print("\n")
-    # print("\n")
-    # board7 = copy.deepcopy(gameBoard.board)
-    # print("board7(before): ", board7)    
-    # print("------------after CCW rotation:")
-    # board8 = gameBoard.rotate90CounterClockwise(board7)
-    # print("board8: ", board8)
-    # print("board7(after): ", board7)
-
-    # print("\n")
-    # print("\n")
-    # board9 = copy.deepcopy(gameBoard.board)
-    # print("board9(before): ", board9)    
-    # print("------------after moving left:")
-    # board10 = gameBoard.moveLeft(board9)
-    # print("board10: ", board10)
-    # print("board9(after): ", board9)
-
-
-    # print("\n")
-    # print("\n")
-    # board9 = copy.deepcopy(gameBoard.board)
-    # print("board9(before): ", board9)    
-    # print("------------after moving right:")
-    # board10 = gameBoard.moveRight(board9)
-    # print("board10: ", board10)
-    # print("board9(after): ", board9)
-
-    # print("\n")
-    # print("\n")
-    # board9 = copy.deepcopy(gameBoard.board)
-    # print("board9(before): ", board9)    
-    # print("------------after moving up:")
-    # board10 = gameBoard.moveUp(board9)
-    # print("board10: ", board10)
-    # print("board9(after): ", board9)
-
-    # print("\n")
-    # print("\n")
-    # board9 = copy.deepcopy(gameBoard.board)
-    # print("board9(before): ", board9)    
-    # print("------------after moving down:")
-    # board10 = gameBoard.moveDown(board9)
-    # print("board10: ", board10)
-    # print("board9(after): ", board9)
-
-    # print("--------------------")
-    # # moving correctness tests
-    # gameBoard.printBoard()
-
-    # print("after moving left:")
-    # gameBoard.board = gameBoard.moveLeft(gameBoard.board)[1]
-    # gameBoard.printBoard()
-
-    # print("after moving down:")
-    # gameBoard.board = gameBoard.moveDown(gameBoard.board)[1]
-    # gameBoard.printBoard()
-
-    # print("after moving up:")
-    # gameBoard.board = gameBoard.moveUp(gameBoard.board)[1]
-    # gameBoard.printBoard()
-
-    # print("after moving right:")
-    # gameBoard.board = gameBoard.moveRight(gameBoard.board)[1]
-    # gameBoard.printBoard()
-
-    # print("game over tests:")
-    # # test with infinite random moves
-    # gameBoard = Board(4)
-    # while not gameBoard.GameOver(gameBoard.board):
-    #     canMove = False
-    #     direction = random.choice(gameBoard.directionList)
-    #     print("direction:", direction)
-    #     if direction == "Up": 
-    #         canMoveUp, board = gameBoard.moveUp(gameBoard.board)
-    #         gameBoard.board = board
-    #         canMove = canMoveUp
-    #     elif direction == "Down":
-    #         canMoveDown, board = gameBoard.moveDown(gameBoard.board)
-    #         gameBoard.board = board
-    #         canMove = canMoveDown
-    #     elif direction == "Left":
-    #         canMoveLeft, board = gameBoard.moveLeft(gameBoard.board)
-    #         gameBoard.board = board
-    #         canMove = canMoveLeft
-    #     elif direction == "Right":
-    #         canMoveRight, board = gameBoard.moveRight(gameBoard.board)
-    #         gameBoard.board = board
-    #         canMove = canMoveRight
-    #     # add a new number after each legal move
-    #     if canMove: gameBoard.board = gameBoard.addNewTile(gameBoard.board)
-    #     else: print("cannot move in this direction") 
-    #     gameBoard.printBoard()
 
 #     print("----------------------------------------------------------------")
 #     print("move with commands:")
-#     board = Board(4)
+#     board = Board(5)
 #     board.move()
 

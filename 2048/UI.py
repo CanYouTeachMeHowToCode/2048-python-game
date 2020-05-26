@@ -5,16 +5,16 @@ from AI import AI
 import copy
 
 class UI(object):
-    def __init__(self, size):
-        self.size = size
-        self.GameBoard = Board(self.size)
+    def __init__(self, GameBoard):
+        self.GameBoard = GameBoard
 
     def init(self, data):
         # board size settings
-        data.size = self.size
+        data.size = self.GameBoard.size
         data.margin = 25
         data.titlePlace = 150
         data.cellSize = (data.width - data.margin * 2) / data.size
+        data.board = self.GameBoard.board
 
         # game state settings (Game Over, Game Paused)
         data.reach2048 = False
@@ -22,8 +22,8 @@ class UI(object):
         data.paused = False
 
         # time settings
-        data.timeCounter = 0
         data.timerDelay = 1000
+        data.timeCounter = 0
 
         # color settings
         data.colors = {0 : "#D7CCC8",
@@ -47,7 +47,10 @@ class UI(object):
 
         # AI settings
         data.AImode = True # implement change in mode later
-        data.AIlevel = 2 # implement customization later
+        if data.AImode: data.timerDelay = 200
+
+        data.AIlevel = 1 # implement customization later
+        data.AIstep = 0
         data.AI = AI(self.GameBoard, data.AIlevel)
 
     def mousePressed(self, event, data):
@@ -60,20 +63,11 @@ class UI(object):
 
         # restart the game 
         if event.keysym == "r" :
-            self.GameBoard = Board(self.size)
+            self.GameBoard = Board(data.size)
             self.init(data)
 
         # player cannot move in the AI mode
-        if data.AImode: 
-            # if event.keysym == "s":
-            #     print("AI start playing")
-            #     step = 0
-            #     while not self.GameBoard.GameOver():
-            #         data.AI.nextMove()
-            #         # update the board after each AI's move
-            #         self.GameBoard.board = data.AI.GameBoard.board 
-            #         self.GameBoard.printBoard()
-            #         step += 1
+        if data.AImode: pass
         else:
             # making moves based on the user's pressing keys
             if not self.GameBoard.GameOver():
@@ -95,14 +89,16 @@ class UI(object):
                     if canMove: self.GameBoard.addNewTile() 
                     else: print("cannot move in this direction") 
                     self.GameBoard.printBoard()
-            else:
+                data.board = self.GameBoard.board
+
+            else: 
                 if self.GameBoard.contains2048(): data.reach2048 = True
                 else: data.cannotMove = True
                 print("Game Over!")
 
     def drawCell(self, canvas, data, row, col):
         #draw every cell
-        currNum = self.GameBoard.board[row][col]
+        currNum = data.board[row][col]
         cellBoundsWidth = 2.5
         canvas.create_rectangle(data.margin + data.cellSize*col, data.margin + \
         data.titlePlace + data.cellSize*row, data.margin + data.cellSize*(col+1), \
@@ -110,18 +106,15 @@ class UI(object):
         fill = data.colors[currNum], width = cellBoundsWidth)
 
     def drawBoard(self, canvas, data):
-        print("updating board: --------")
-        self.GameBoard.printBoard()
-        print("----------------------------------------------------------------")
         #draw the board by filling every cells(using draw cells)
         for row in range(data.size):
             for col in range(data.size):
                 self.drawCell(canvas, data, row, col)
-                if self.GameBoard.board[row][col]:
+                if data.board[row][col]:
                     canvas.create_text(data.margin + data.cellSize/2 + 
                         col*data.cellSize, data.titlePlace + data.margin + 
                         data.cellSize/2 + row*data.cellSize, 
-                        text = self.GameBoard.board[row][col], \
+                        text = data.board[row][col], \
                         font = "Arial 45", fill = "black") 
 
     def drawGameOverPage(self, canvas, data):
@@ -131,7 +124,10 @@ class UI(object):
         if data.reach2048: 
             canvas.create_rectangle(0, 0, data.width, data.height, fill = "#EEEBE9")
             canvas.create_text(data.width / 2, data.height / 2, \
-                               text = "Congratulations! you get 2048 and win!", \
+                               text = "Congratulations!", \
+                               font = "Arial 50 bold", fill = "red")
+            canvas.create_text(data.width / 2, data.height * 0.6, \
+                               text = "you get 2048 and WIN!", \
                                font = "Arial 50 bold", fill = "red")
 
         # cannot have any legal moves before reach 2048
@@ -149,9 +145,16 @@ class UI(object):
         canvas.create_text(data.width / 4, data.titlePlace / 2, 
                             text = "2048", \
                             font = "Arial 60 bold", fill = "#795548")
-        canvas.create_text((data.width / 2), data.titlePlace / 2, 
-                            text = "Time:" + str(data.timeCounter) ,\
-                            font = "Arial 23 bold", fill = "purple")
+
+        if data.AImode:
+            canvas.create_text((data.width / 2), data.titlePlace / 2, 
+                                text = "Step:" + str(data.AIstep) ,\
+                                font = "Arial 23 bold", fill = "purple")            
+        else:
+            canvas.create_text((data.width / 2), data.titlePlace / 2, 
+                                text = "Time:" + str(data.timeCounter) ,\
+                                font = "Arial 23 bold", fill = "purple")
+
         canvas.create_text((data.width * 0.75), data.titlePlace / 2, 
                             text = "Score:" + str(self.GameBoard.score) ,\
                             font = "Arial 23 bold", fill = "purple")
@@ -167,9 +170,28 @@ class UI(object):
         # Game over
         if data.reach2048 or data.cannotMove : self.drawGameOverPage(canvas, data)
 
+    def AImove(self, data):
+        print("AI playing")
+        print("step %d:" % data.AIstep)
+        data.AI.nextMove()
+        # update the board after each AI's move
+        self.GameBoard.board = data.AI.GameBoard.board 
+        self.GameBoard.printBoard()
+        data.board = data.AI.GameBoard.board
+        data.AIstep += 1
+
     def timerFired(self, data):
         if not (data.reach2048 or data.cannotMove) and not data.paused:
             data.timeCounter += 1
+
+            if data.AImode:
+                if not self.GameBoard.GameOver():
+                    # move twice in each timer delay period
+                    self.AImove(data)
+                else:
+                    if self.GameBoard.contains2048(): data.reach2048 = True
+                    else: data.cannotMove = True
+                    print("Game Over!")
 
     def runGame(self, width, height): # tkinter starter code
         def redrawAllWrapper(canvas, data):

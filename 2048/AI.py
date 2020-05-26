@@ -145,23 +145,13 @@ class AI(object):
 
     # player's move
     def expectiMaxieMove(self, depth):
-        # print("player's move:\n")
         if not depth: return (self.evaluate(), None) # depth = 0
 
         # get all legal actions and preserve the board
-        # originalBoard = copy.deepcopy(self.GameBoard.board)
         originalScore = self.GameBoard.score
 
-        # print("-------------------test for getLegalMoves():\n")
-        # print("----before----")
-        # self.GameBoard.printBoard()
-
         actions = self.getLegalMoves()
-        # print("----after----")
-        # self.GameBoard.printBoard()
 
-        # print("actions: ", end = "")
-        # print(actions)
         if not actions: return (self.evaluate(), None) # no legal actions
 
         (bestScore, bestAction) = (-float('inf'), None)
@@ -171,19 +161,16 @@ class AI(object):
             self.performAction(action)
             (computerScore, computerAction) = self.expectiMinnieMove(depth-1)
             self.GameBoard.board = beforeMoveBoard
+            self.GameBoard.score = originalScore
 
             if computerScore > bestScore:
                 bestScore = computerScore
                 bestAction = action
 
-        self.GameBoard.score = originalScore
         return (bestScore, bestAction)
 
     # computer's move
     def expectiMinnieMove(self, depth):
-        # print("computer's move:\n")
-        # self.GameBoard.printBoard()
-
         if not depth: return (self.evaluate(), None) # depth = 0
 
         originalScore = self.GameBoard.score
@@ -197,14 +184,12 @@ class AI(object):
                 if not self.GameBoard.board[i][j]: # this tile is empty
                     emptyTiles.append((i, j))
 
-        # print("empty tiles:", emptyTiles)
         actions = []
         for index in emptyTiles:
             # can add 2 or 4 on any empty tile
             actions.append((index, 2))
             actions.append((index, 4))
-        # print("actions: ", end = "")
-        # print(actions)
+
         if not actions: return (self.evaluate(), None) # no legal actions
 
         (bestScore, bestAction) = (float('inf'), None)
@@ -214,35 +199,23 @@ class AI(object):
             self.addNewNum(action) # perform computer's action
             (playerScore, playerAction) = self.expectiMaxieMove(depth-1)
             self.GameBoard.board = beforeMoveBoard
+            self.GameBoard.score = originalScore
 
             if playerScore < bestScore:
                 bestScore = playerScore
                 bestAction = action
 
-        self.GameBoard.score = originalScore
         return (bestScore, bestAction)
 
     # player's move with alpha-beta pruning
     def expectiMaxieMoveAlphaBeta(self, depth, alpha, beta):
         assert(alpha < beta)
-        # print("player's move with alpha-beta pruning: ")
-        # print("alpha, beta:", (alpha, beta))
         if not depth: return (self.evaluate(), None) # depth = 0
 
         # get all legal actions and preserve the board
-        # originalBoard = copy.deepcopy(self.GameBoard.board)
         originalScore = self.GameBoard.score
-
-        # print("-------------------test for getLegalMoves():\n")
-        # print("----before----")
-        # self.GameBoard.printBoard()
-
         actions = self.getLegalMoves()
-        # print("----after----")
-        # self.GameBoard.printBoard()
 
-        # print("actions: ", end = "")
-        # print(actions)
         if not actions: return (self.evaluate(), None) # no legal actions
 
         (bestScore, bestAction) = (-float('inf'), None)
@@ -252,6 +225,7 @@ class AI(object):
             self.performAction(action)
             (computerScore, computerAction) = self.expectiMinnieMoveAlphaBeta(depth-1, alpha, beta)
             self.GameBoard.board = beforeMoveBoard
+            self.GameBoard.score = originalScore
 
             if computerScore > bestScore:
                 bestScore = computerScore
@@ -259,14 +233,11 @@ class AI(object):
                 alpha = max(alpha, bestScore)
                 if (alpha >= beta): break
 
-        self.GameBoard.score = originalScore
         return (bestScore, bestAction)
 
     # computer's move with alpha-beta pruning
     def expectiMinnieMoveAlphaBeta(self, depth, alpha, beta):
         assert(alpha < beta)
-        # print("computer's move with alpha-beta pruning: ")
-        # print("alpha, beta:", (alpha, beta))
         if not depth: return (self.evaluate(), None) # depth = 0
 
         originalScore = self.GameBoard.score
@@ -279,14 +250,12 @@ class AI(object):
                 if not self.GameBoard.board[i][j]: # this tile is empty
                     emptyTiles.append((i, j))
 
-        # print("empty tiles:", emptyTiles)
         actions = []
         for index in emptyTiles:
             # can add 2 or 4 on any empty tile
             actions.append((index, 2))
             actions.append((index, 4))
-        # print("actions: ", end = "")
-        # print(actions)
+
         if not actions: return (self.evaluate(), None) # no legal actions
 
         (bestScore, bestAction) = (float('inf'), None)
@@ -296,6 +265,7 @@ class AI(object):
             self.addNewNum(action) # perform computer's action
             (playerScore, playerAction) = self.expectiMaxieMoveAlphaBeta(depth-1, alpha, beta)
             self.GameBoard.board = beforeMoveBoard
+            self.GameBoard.score = originalScore
 
             if playerScore < bestScore:
                 bestScore = playerScore
@@ -303,12 +273,11 @@ class AI(object):
                 beta = min(beta, bestScore)
                 if (alpha >= beta) : break
 
-        self.GameBoard.score = originalScore
         return (bestScore, bestAction)
 
     def getMaxMove2(self):
         (score, action) = self.expectiMaxieMove(4)
-        print("bestScore, bestAction:", (score, action))
+        # print("bestScore, bestAction:", (score, action))
         self.performAction(action)
 
         # in reality, computer still generates numbers on board randomly
@@ -316,13 +285,13 @@ class AI(object):
 
     def getMaxMove3(self):
         (score, action) = self.expectiMaxieMoveAlphaBeta(6, -float('inf'), float('inf'))
-        print("bestScore, bestAction:", (score, action))
+        # print("bestScore, bestAction:", (score, action))
         self.performAction(action)
 
         # in reality, computer still generates numbers on board randomly
         self.GameBoard.addNewTile()
 
-
+    # this function is used for terminal playing version
     def playTheGame(self):
         step = 0
         print("start board: ", end = "")
