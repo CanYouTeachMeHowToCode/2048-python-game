@@ -284,7 +284,7 @@ class AI(object):
         self.GameBoard.addNewTile()
 
     def getMaxMove3(self):
-        (score, action) = self.expectiMaxieMoveAlphaBeta(6, -float('inf'), float('inf'))
+        (score, action) = self.expectiMaxieMoveAlphaBeta(5, -float('inf'), float('inf'))
         # print("bestScore, bestAction:", (score, action))
         self.performAction(action)
 

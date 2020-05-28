@@ -16,6 +16,18 @@ class UI(object):
         data.cellSize = (data.width - data.margin * 2) / data.size
         data.board = self.GameBoard.board
 
+        # start page modes
+        data.startPage = True
+        data.playerMode = False
+        data.AImode = False 
+
+        # size, level selection page modes
+        data.customizeSizeMode = False
+        data.levelSelectionMode = False # only applicable for AI mode
+
+        # game page modes
+        data.inGame = False
+
         # game state settings (Game Over, Game Paused)
         data.reach2048 = False
         data.cannotMove = False
@@ -46,7 +58,6 @@ class UI(object):
                        131072 : "#0288D1"}
 
         # AI settings
-        data.AImode = True # implement change in mode later
         if data.AImode: data.timerDelay = 200
 
         data.AIlevel = 1 # implement customization later
@@ -96,6 +107,45 @@ class UI(object):
                 else: data.cannotMove = True
                 print("Game Over!")
 
+## Graphic drawing functions below
+    # home page
+    def drawStartPage(self, canvas, data):
+        canvas.create_rectangle(0, 0, data.width, data.height, fill = "#ECEFF1")
+        logoImage = PhotoImage("2048logo.gif")
+        logoImage = logoImage.zoom(3, 3)
+        print(logoImage)
+        canvas.create_image(data.width / 2, data.height / 4, \
+                            image = logoImage) #, width = 100, height = 100).zoom(3, 3))
+
+        # player mode button
+        canvas.create_rectangle(data.width//4, data.height//2, \
+                                data.width*(3/4), data.height*(3/5), 
+                                fill = "lemon chiffon")
+        canvas.create_text(data.width//2, data.height*(11/20), \
+                                text = "Player", font = "Arial 40 bold")
+
+        # AI mode button
+        canvas.create_rectangle(data.width//4, data.height*(3/5+1/30), \
+                                data.width*(3/4), data.height*(7/10+1/30), \
+                                fill = "lemon chiffon")
+        canvas.create_text(data.width//2, data.height*(13/20+1/30), \
+                                text = "AI", font = "Arial 40 bold")
+
+        # settings button
+        canvas.create_rectangle(data.width//4, data.height*(7/10+1/15), \
+                                data.width*(3/4), data.height*(4/5+1/15), \
+                                fill = "lemon chiffon")
+        canvas.create_text(data.width//2, data.height*(3/4+1/15), \
+                                text = "Settings", font = "Arial 40 bold")
+
+        #quit button
+        canvas.create_rectangle(data.width*(5/6), data.height*(9/10), \
+                                data.width*(29/30), data.height*(29/30),
+                                fill = "light grey")
+        canvas.create_text(data.width*(9/10), data.height*(14/15), \
+                                text = "Quit", font = "Arial 30 bold")
+
+    # game page
     def drawCell(self, canvas, data, row, col):
         #draw every cell
         currNum = data.board[row][col]
@@ -117,9 +167,35 @@ class UI(object):
                         text = data.board[row][col], \
                         font = "Arial 45", fill = "black") 
 
-    def drawGameOverPage(self, canvas, data):
-        # draw the game over page
+    def drawGamePage(self, canvas, data):
+        canvas.create_rectangle(0, 0, data.width, data.height, fill = "#EFEBE9")
+        canvas.create_text(data.width / 4, data.titlePlace / 2, 
+                            text = "2048", \
+                            font = "Arial 60 bold", fill = "#795548")
 
+        if data.AImode: # AI mode
+            canvas.create_text((data.width / 2), data.titlePlace / 2, 
+                                text = "Step:" + str(data.AIstep) ,\
+                                font = "Arial 23 bold", fill = "purple")            
+        else: # player mode
+            canvas.create_text((data.width / 2), data.titlePlace / 2, 
+                                text = "Time:" + str(data.timeCounter) ,\
+                                font = "Arial 23 bold", fill = "purple")
+
+        canvas.create_text((data.width * 0.75), data.titlePlace / 2, 
+                            text = "Score:" + str(self.GameBoard.score) ,\
+                            font = "Arial 23 bold", fill = "purple")
+        self.drawBoard(canvas, data)
+
+        # Game paused
+        if data.paused: 
+            canvas.create_rectangle(0, data.height/3, data.width, \
+                                            data.height*(2/3), fill = "gold")
+            canvas.create_text(data.width/2, data.height/2, text = "Game Paused!",\
+                                font = "TimesNewRoman 35 bold", fill = "red")
+
+    # game over page  
+    def drawGameOverPage(self, canvas, data):
         # reach 2048
         if data.reach2048: 
             canvas.create_rectangle(0, 0, data.width, data.height, fill = "#EEEBE9")
@@ -141,31 +217,8 @@ class UI(object):
                    font = "Arial 30 bold", fill = "purple")
 
     def redrawAll(self, canvas, data):
-        canvas.create_rectangle(0, 0, data.width, data.height, fill = "#EFEBE9")
-        canvas.create_text(data.width / 4, data.titlePlace / 2, 
-                            text = "2048", \
-                            font = "Arial 60 bold", fill = "#795548")
-
-        if data.AImode:
-            canvas.create_text((data.width / 2), data.titlePlace / 2, 
-                                text = "Step:" + str(data.AIstep) ,\
-                                font = "Arial 23 bold", fill = "purple")            
-        else:
-            canvas.create_text((data.width / 2), data.titlePlace / 2, 
-                                text = "Time:" + str(data.timeCounter) ,\
-                                font = "Arial 23 bold", fill = "purple")
-
-        canvas.create_text((data.width * 0.75), data.titlePlace / 2, 
-                            text = "Score:" + str(self.GameBoard.score) ,\
-                            font = "Arial 23 bold", fill = "purple")
-        self.drawBoard(canvas, data)
-
-        # Game paused
-        if data.paused: 
-            canvas.create_rectangle(0, data.height/3, data.width, \
-                                            data.height*(2/3), fill = "gold")
-            canvas.create_text(data.width/2, data.height/2, text = "Game Paused!",\
-                                font = "TimesNewRoman 35 bold", fill = "red")
+        if data.startPage: self.drawStartPage(canvas, data)
+        if data.playerMode or data.AImode: self.drawGamePage(canvas, data)
 
         # Game over
         if data.reach2048 or data.cannotMove : self.drawGameOverPage(canvas, data)
