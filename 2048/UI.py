@@ -96,7 +96,6 @@ class UI(object):
         # customize size page
         if data.customizeSizeMode:
             assert(not data.levelSelectionMode)
-            print("customize size")
             # press the empty "size button" to enter the board size
             if event.x in range(data.width//2, int(data.width*(3/4))) and \
                event.y in range(data.height//2, int(data.height*(3/5))):
@@ -105,7 +104,6 @@ class UI(object):
             # press the finish button to enter the game state
             elif event.x in range(int(data.width*(3/8)), int(data.width*(5/8))) and \
                  event.y in range(int(data.height*(1/4+1/15)), int(data.height*(7/20+1/15))):
-                print("data.size:", data.size)
                 self.resetGameBoard(data)
                 if data.AImode: data.levelSelectionMode = True
                 else: data.inGame = True
@@ -114,12 +112,9 @@ class UI(object):
         # level selection mode (only applicable for AI mode)
         if data.levelSelectionMode:
             assert(data.AImode and not data.playerMode and not data.customizeSizeMode)
-            print("select level")
             # easy level
-            print("event.x, event.y:", event.x, event.y)
             if event.x in range(data.width//4, int(data.width*(3/4))) and \
                 event.y in range(data.height//2, int(data.height*(3/5))):
-                print("enter easy AI")
                 data.AI = AI(self.GameBoard, 0)
                 data.levelSelectionMode = False
                 data.inGame = True
@@ -128,7 +123,6 @@ class UI(object):
             elif event.x in range(data.width//4, int(data.width*(3/4))) and \
                 event.y in range(int(data.height*(3/5+1/30)), \
                                 int(data.height*(7/10+1/30))):
-                print("enter normal AI")
                 data.AI = AI(self.GameBoard, 1)
                 data.levelSelectionMode = False
                 data.inGame = True
@@ -137,14 +131,9 @@ class UI(object):
             elif event.x in range(data.width//4, int(data.width*(3/4))) and \
                 event.y in range(int(data.height*(7/10+1/15)), \
                                 int(data.height*(4/5+1/15))):
-                print("enter hard AI")
                 data.AI = AI(self.GameBoard, 2)
                 data.levelSelectionMode = False
                 data.inGame = True
-
-            else:
-                print("select level first!")
-                pass
 
     def keyPressed(self, event, data):
         # press "shift + b" to return back to home page from anywhere
@@ -157,7 +146,6 @@ class UI(object):
 
         # customize size mode
         if data.customizeSizeMode:
-            print("customize size")
             if data.selectingBoardSize and (event.keysym in string.digits):
                 if int(event.keysym) in range(4, 10):
                     data.size = int(event.keysym)
@@ -313,11 +301,12 @@ class UI(object):
             for col in range(data.size):
                 self.drawCell(canvas, data, row, col)
                 if data.board[row][col]:
+                    textSize = 180 // data.size
                     canvas.create_text(data.margin + data.cellSize/2 + 
                         col*data.cellSize, data.titlePlace + data.margin + 
                         data.cellSize/2 + row*data.cellSize, 
                         text = data.board[row][col], \
-                        font = "Arial 45", fill = "black") 
+                        font = ("Arial", textSize), fill = "black") 
 
     def drawGamePage(self, canvas, data):
         canvas.create_rectangle(0, 0, data.width, data.height, fill = "#EFEBE9")
