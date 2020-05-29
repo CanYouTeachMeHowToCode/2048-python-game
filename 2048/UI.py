@@ -3,10 +3,12 @@ from tkinter import *
 from board import Board
 from AI import AI
 import copy
+import string
+import sys
 
 class UI(object):
-    def __init__(self, GameBoard):
-        self.GameBoard = GameBoard
+    def __init__(self):
+        self.GameBoard = Board(4) # default board size is 4
 
     def init(self, data):
         # board size settings
@@ -19,10 +21,12 @@ class UI(object):
         # start page modes
         data.startPage = True
         data.playerMode = False
-        data.AImode = False 
+        data.AImode = False
 
         # size, level selection page modes
         data.customizeSizeMode = False
+        data.selectingBoardSize = False
+
         data.levelSelectionMode = False # only applicable for AI mode
 
         # game page modes
@@ -58,65 +62,159 @@ class UI(object):
                        131072 : "#0288D1"}
 
         # AI settings
-        if data.AImode: data.timerDelay = 200
-
-        data.AIlevel = 1 # implement customization later
         data.AIstep = 0
-        data.AI = AI(self.GameBoard, data.AIlevel)
+        data.AI = None
+
+    def resetGameBoard(self, data):
+        self.GameBoard = Board(data.size)
+        data.board = self.GameBoard.board
+        data.cellSize = (data.width - data.margin * 2) / data.size
+        data.timeCounter = 0
 
     def mousePressed(self, event, data):
-        pass
+        # three buttons in the start page
+        if data.startPage:
+            # enter the player mode
+            if event.x in range(data.width//4, int(data.width*(3/4))) and \
+                event.y in range(data.height//2, int(data.height*(3/5))):
+                data.playerMode = True
+                data.customizeSizeMode = True
+                data.startPage = False
+
+            # enter the AI mode
+            elif event.x in range(data.width//4, int(data.width*(3/4))) and \
+                  event.y in range(int(data.height*(3/5+1/30)), int(data.height*(7/10+1/30))):
+                data.AImode = True
+                data.customizeSizeMode = True
+                data.startPage = False
+
+            # exit button
+            elif event.x in range(int(data.width*(5/6)), int(data.width*(29/30))) and \
+                 event.y in range(int(data.height*(9/10)), int(data.height*(29/30))):
+                sys.exit()
+
+        # customize size page
+        if data.customizeSizeMode:
+            assert(not data.levelSelectionMode)
+            print("customize size")
+            # press the empty "size button" to enter the board size
+            if event.x in range(data.width//2, int(data.width*(3/4))) and \
+               event.y in range(data.height//2, int(data.height*(3/5))):
+                data.selectingBoardSize = True
+
+            # press the finish button to enter the game state
+            elif event.x in range(int(data.width*(3/8)), int(data.width*(5/8))) and \
+                 event.y in range(int(data.height*(1/4+1/15)), int(data.height*(7/20+1/15))):
+                print("data.size:", data.size)
+                self.resetGameBoard(data)
+                if data.AImode: data.levelSelectionMode = True
+                else: data.inGame = True
+                data.customizeSizeMode = False
+
+        # level selection mode (only applicable for AI mode)
+        if data.levelSelectionMode:
+            assert(data.AImode and not data.playerMode and not data.customizeSizeMode)
+            print("select level")
+            # easy level
+            print("event.x, event.y:", event.x, event.y)
+            if event.x in range(data.width//4, int(data.width*(3/4))) and \
+                event.y in range(data.height//2, int(data.height*(3/5))):
+                print("enter easy AI")
+                data.AI = AI(self.GameBoard, 0)
+                data.levelSelectionMode = False
+                data.inGame = True
+            
+            # normal level
+            elif event.x in range(data.width//4, int(data.width*(3/4))) and \
+                event.y in range(int(data.height*(3/5+1/30)), \
+                                int(data.height*(7/10+1/30))):
+                print("enter normal AI")
+                data.AI = AI(self.GameBoard, 1)
+                data.levelSelectionMode = False
+                data.inGame = True
+
+            # hard level
+            elif event.x in range(data.width//4, int(data.width*(3/4))) and \
+                event.y in range(int(data.height*(7/10+1/15)), \
+                                int(data.height*(4/5+1/15))):
+                print("enter hard AI")
+                data.AI = AI(self.GameBoard, 2)
+                data.levelSelectionMode = False
+                data.inGame = True
+
+            else:
+                print("select level first!")
+                pass
 
     def keyPressed(self, event, data):
-        # pause the game (can be retrieved)
-        if event.keysym == "p":
-            data.paused = not data.paused 
+        # press "shift + b" to return back to home page from anywhere
+        if event.keysym == "B": 
+            data.startPage = True
+            data.customizeSizeMode = False
+            data.selectingBoardSize = False
+            data.levelSelectionMode = False
+            data.inGame = False
 
-        # restart the game 
-        if event.keysym == "r" :
-            self.GameBoard = Board(data.size)
-            self.init(data)
+        # customize size mode
+        if data.customizeSizeMode:
+            print("customize size")
+            if data.selectingBoardSize and (event.keysym in string.digits):
+                if int(event.keysym) in range(4, 10):
+                    data.size = int(event.keysym)
+                elif int(event.keysym) == 1: # enter 1 to represent size = 10
+                    data.size = 10
+                data.selectingBoardSize = False
+            else:
+                pass 
 
-        # player cannot move in the AI mode
-        if data.AImode: pass
-        else:
-            # making moves based on the user's pressing keys
-            if not self.GameBoard.GameOver():
-                canMove = False
-                if data.paused: 
-                    print("the game is paused now! you cannot move until the game is unpaused")
-                else:
-                    direction = event.keysym
-                    if direction == "Up": 
-                        canMove = self.GameBoard.moveUp()
-                    elif direction == "Down":
-                        canMove = self.GameBoard.moveDown()
-                    elif direction == "Left":
-                        canMove = self.GameBoard.moveLeft()
-                    elif direction == "Right":
-                        canMove = self.GameBoard.moveRight()
+        # in game mode
+        if data.inGame:
+            # pause the game (can be retrieved)
+            if event.keysym == "p":
+                data.paused = not data.paused 
 
-                    # add a new number after each legal move
-                    if canMove: self.GameBoard.addNewTile() 
-                    else: print("cannot move in this direction") 
-                    self.GameBoard.printBoard()
-                data.board = self.GameBoard.board
+            # restart the game 
+            if event.keysym == "r" :
+                self.resetGameBoard(data)
 
-            else: 
-                if self.GameBoard.contains2048(): data.reach2048 = True
-                else: data.cannotMove = True
-                print("Game Over!")
+            # player cannot move in the AI mode
+            if data.AImode: pass
+            else:
+                # making moves based on the user's pressing keys
+                if not self.GameBoard.GameOver():
+                    canMove = False
+                    if data.paused: 
+                        print("the game is paused now! you cannot move until the game is unpaused")
+                    else:
+                        direction = event.keysym
+                        if direction == "Up": 
+                            canMove = self.GameBoard.moveUp()
+                        elif direction == "Down":
+                            canMove = self.GameBoard.moveDown()
+                        elif direction == "Left":
+                            canMove = self.GameBoard.moveLeft()
+                        elif direction == "Right":
+                            canMove = self.GameBoard.moveRight()
+
+                        # add a new number after each legal move
+                        if canMove: self.GameBoard.addNewTile() 
+                        else: print("cannot move in this direction") 
+                        self.GameBoard.printBoard()
+                    data.board = self.GameBoard.board
+
+                else: 
+                    if self.GameBoard.contains2048(): data.reach2048 = True
+                    else: data.cannotMove = True
+                    print("Game Over!")
 
 ## Graphic drawing functions below
     # home page
     def drawStartPage(self, canvas, data):
         canvas.create_rectangle(0, 0, data.width, data.height, fill = "#ECEFF1")
-        logoImage = PhotoImage("2048logo.gif")
-        logoImage = logoImage.zoom(3, 3)
-        print(logoImage)
-        canvas.create_image(data.width / 2, data.height / 4, \
-                            image = logoImage) #, width = 100, height = 100).zoom(3, 3))
-
+        canvas.create_text(data.width//2, data.height//4, text = "2048", \
+                            fill = "#FDD835", font = "Oswald 90 bold") 
+        canvas.create_text(data.width//2, 3*(data.height//8), text = "by Yilun Wu", \
+                            fill = "light coral", font = "Caladea 40") 
         # player mode button
         canvas.create_rectangle(data.width//4, data.height//2, \
                                 data.width*(3/4), data.height*(3/5), 
@@ -144,6 +242,60 @@ class UI(object):
                                 fill = "light grey")
         canvas.create_text(data.width*(9/10), data.height*(14/15), \
                                 text = "Quit", font = "Arial 30 bold")
+
+    # customize size page
+    def drawCustomizeSizePage(self, canvas, data):
+        canvas.create_rectangle(0, 0, data.width, data.height, fill = "cyan")
+        canvas.create_text(data.width//2, data.height//4, \
+                            text = "Select Your Size Here!", \
+                            font = "Arial 50 bold", fill = "purple")
+
+        #Sizes (4-10)
+        canvas.create_text(data.width//4, data.height*(11/20), \
+                            text = "Board Size(Width):", font = "Arial 35")
+        if data.selectingBoardSize:
+            canvas.create_rectangle(data.width//2, data.height//2, \
+                                data.width*(3/4), data.height*(3/5), \
+                                fill = "light goldenrod")
+        else:
+            canvas.create_rectangle(data.width//2, data.height//2, \
+                                data.width*(3/4), data.height*(3/5), \
+                                fill = "lemon chiffon")
+        canvas.create_text(data.width*(5/8), data.height*(11/20), \
+                            text = data.size, font = "Arial 35")
+        canvas.create_text(data.width*(7/8), data.height*(11/20), \
+                            text = "(4-10)", font = "Arial 35") 
+
+        # finish button
+        canvas.create_rectangle(data.width*(3/8), data.height*(1/4+1/15), \
+                                data.width*(5/8), data.height*(7/20+1/15), \
+                                fill = "lemon chiffon")
+        canvas.create_text(data.width//2, data.height*(3/10+1/15), 
+                            text = "Finish!", font = "Arial 40")
+
+    # AI mode level selection page
+    def drawLevelSelectionPage(self, canvas, data):
+        canvas.create_rectangle(0, 0, data.width, data.height, fill = "cyan")
+        canvas.create_text(data.width//2, data.height//4, text = "Select a Level!", \
+                            font = "Arial 55 bold", fill = "purple")
+        # easy mode
+        canvas.create_rectangle(data.width//4, data.height//2, \
+                                data.width*(3/4), data.height*(3/5), 
+                                fill = "lemon chiffon")
+        canvas.create_text(data.width//2, data.height*(11/20), text = "Easy", \
+                            font = "Arial 35 bold")
+        # normal mode
+        canvas.create_rectangle(data.width//4, data.height*(3/5+1/30), \
+                                data.width*(3/4), data.height*(7/10+1/30), \
+                                fill = "lemon chiffon")
+        canvas.create_text(data.width//2, data.height*(13/20+1/30), \
+                            text = "Normal", font = "Arial 35 bold")
+        # hard mode
+        canvas.create_rectangle(data.width//4, data.height*(7/10+1/15), \
+                                data.width*(3/4), data.height*(4/5+1/15), \
+                                fill = "lemon chiffon")
+        canvas.create_text(data.width//2, data.height*(3/4+1/15), 
+                            text = "Hard", font = "Arial 35 bold")
 
     # game page
     def drawCell(self, canvas, data, row, col):
@@ -217,11 +369,22 @@ class UI(object):
                    font = "Arial 30 bold", fill = "purple")
 
     def redrawAll(self, canvas, data):
+        # start page
         if data.startPage: self.drawStartPage(canvas, data)
-        if data.playerMode or data.AImode: self.drawGamePage(canvas, data)
 
-        # Game over
-        if data.reach2048 or data.cannotMove : self.drawGameOverPage(canvas, data)
+        # customize size page
+        elif data.customizeSizeMode: self.drawCustomizeSizePage(canvas, data)
+
+        # AI mode level selection page
+        elif data.levelSelectionMode: 
+            assert(data.AImode and not data.playerMode and not data.customizeSizeMode)
+            self.drawLevelSelectionPage(canvas, data)
+
+        # in game page
+        elif data.inGame: self.drawGamePage(canvas, data)
+
+        # game over page
+        elif data.reach2048 or data.cannotMove : self.drawGameOverPage(canvas, data)
 
     def AImove(self, data):
         print("AI playing")
@@ -234,10 +397,11 @@ class UI(object):
         data.AIstep += 1
 
     def timerFired(self, data):
-        if not (data.reach2048 or data.cannotMove) and not data.paused:
+        if data.inGame and not (data.reach2048 or data.cannotMove) and not data.paused:
             data.timeCounter += 1
 
             if data.AImode:
+                data.timerDelay = 200
                 if not self.GameBoard.GameOver():
                     # move twice in each timer delay period
                     self.AImove(data)
