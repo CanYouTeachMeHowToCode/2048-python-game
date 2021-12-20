@@ -8,7 +8,7 @@ class AI(object):
     def __init__(self, GameBoard, level):
         self.size = GameBoard.size
         self.GameBoard = GameBoard
-        self.level = ["easy", "normal", "hard"][level]
+        self.level = ["easy", "normal", "hard", "expert"][level]
 
         # weight board assign the grids on board with weight 
         # in zigzag order increasing exponentially with base 4
@@ -34,6 +34,7 @@ class AI(object):
         if self.level == "easy": self.getMaxMove1()
         elif self.level == "normal": self.getMaxMove2()
         elif self.level == "hard" : self.getMaxMove3()
+        else: self.getMaxMove4() 
 
     def getLegalMoves(self):
         originalScore = self.GameBoard.score
@@ -290,6 +291,11 @@ class AI(object):
 
         # in reality, computer still generates numbers on board randomly
         self.GameBoard.addNewTile()
+
+    def getMaxMove4(self):
+        # apply reinforcement learning
+        print("有时间一定会做的")
+        raise NotImplementedError
 
     # this function is used for terminal playing version
     def playTheGame(self):

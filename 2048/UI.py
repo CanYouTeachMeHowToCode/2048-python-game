@@ -161,10 +161,6 @@ class UI(object):
             if event.keysym == "p":
                 data.paused = not data.paused 
 
-            # restart the game 
-            if event.keysym == "r" :
-                self.resetGameBoard(data)
-
             # player cannot move in the AI mode
             if data.AImode: pass
             else:
@@ -193,7 +189,17 @@ class UI(object):
                 else: 
                     if self.GameBoard.contains2048(): data.reach2048 = True
                     else: data.cannotMove = True
+                    data.inGame = False
                     print("Game Over!")
+        else:
+            assert(not data.inGame)
+            # restart the game only when the current game is over
+            if event.keysym == "r" :
+                data.inGame = True
+                self.resetGameBoard(data)
+
+                # for AI mode, directly return to the start page
+                if data.AImode: self.init(data) 
 
 ## Graphic drawing functions below
     # home page
