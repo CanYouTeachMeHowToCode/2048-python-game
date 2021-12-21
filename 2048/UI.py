@@ -2,9 +2,11 @@
 from tkinter import *
 from board import Board
 from AI import AI
+
 import copy
 import string
 import sys
+import time
 
 class UI(object):
     def __init__(self):
@@ -17,6 +19,8 @@ class UI(object):
         data.titlePlace = 150
         data.cellSize = (data.width - data.margin * 2) / data.size
         data.board = self.GameBoard.board
+        data.finishAdding = False
+        data.newTileIndex = None, None # index of the new adding tile
 
         # start page modes
         data.startPage = True
@@ -93,6 +97,9 @@ class UI(object):
                  event.y in range(int(data.height*(9/10)), int(data.height*(29/30))):
                 sys.exit()
 
+            # clear mouse position after each manipulation
+            event.x, event.y = None, None
+
         # customize size page
         if data.customizeSizeMode:
             assert(not data.levelSelectionMode)
@@ -108,6 +115,9 @@ class UI(object):
                 if data.AImode: data.levelSelectionMode = True
                 else: data.inGame = True
                 data.customizeSizeMode = False
+
+            # clear mouse position after each manipulation
+            event.x, event.y = None, None
 
         # level selection mode (only applicable for AI mode)
         if data.levelSelectionMode:
@@ -135,10 +145,15 @@ class UI(object):
                 data.levelSelectionMode = False
                 data.inGame = True
 
+            # clear mouse position after each manipulation
+            event.x, event.y = None, None
+
     def keyPressed(self, event, data):
         # press "shift + b" to return back to home page from anywhere
         if event.keysym == "B": 
             data.startPage = True
+            data.playerMode = False
+            data.AImode = False
             data.customizeSizeMode = False
             data.selectingBoardSize = False
             data.levelSelectionMode = False
@@ -181,10 +196,13 @@ class UI(object):
                             canMove = self.GameBoard.moveRight()
 
                         # add a new number after each legal move
-                        if canMove: self.GameBoard.addNewTile() 
+                        if canMove: 
+                            data.newTileIndex, data.newTileNum = self.GameBoard.addNewTile() 
+                            print("data.newTileIndex: ", data.newTileIndex)
                         else: print("cannot move in this direction") 
                         self.GameBoard.printBoard()
                     data.board = self.GameBoard.board
+                    data.finishAdding = False # set to False for next move
 
                 else: 
                     if self.GameBoard.contains2048(): data.reach2048 = True
@@ -293,16 +311,24 @@ class UI(object):
 
     # game page
     def drawCell(self, canvas, data, row, col):
-        #draw every cell
+        # draw every cell
         currNum = data.board[row][col]
         cellBoundsWidth = 2.5
-        canvas.create_rectangle(data.margin + data.cellSize*col, data.margin + \
-        data.titlePlace + data.cellSize*row, data.margin + data.cellSize*(col+1), \
-        data.margin + data.titlePlace + data.cellSize*(row+1), \
-        fill = data.colors[currNum], width = cellBoundsWidth)
+        if (row, col) == data.newTileIndex and not data.finishAdding: # new added tile with contrasting color
+            canvas.create_rectangle(data.margin + data.cellSize*col, data.margin + \
+            data.titlePlace + data.cellSize*row, data.margin + data.cellSize*(col+1), \
+            data.margin + data.titlePlace + data.cellSize*(row+1), \
+            fill = "cyan", width = cellBoundsWidth)
+            data.finishAdding = True
+            data.newTileIndex = None, None
+        else:
+            canvas.create_rectangle(data.margin + data.cellSize*col, data.margin + \
+            data.titlePlace + data.cellSize*row, data.margin + data.cellSize*(col+1), \
+            data.margin + data.titlePlace + data.cellSize*(row+1), \
+            fill = data.colors[currNum], width = cellBoundsWidth)
 
     def drawBoard(self, canvas, data):
-        #draw the board by filling every cells(using draw cells)
+        # draw the board by filling every cells(using draw cells)
         for row in range(data.size):
             for col in range(data.size):
                 self.drawCell(canvas, data, row, col)
@@ -313,6 +339,7 @@ class UI(object):
                         data.cellSize/2 + row*data.cellSize, 
                         text = data.board[row][col], \
                         font = ("Arial", textSize), fill = "black") 
+
 
     def drawGamePage(self, canvas, data):
         canvas.create_rectangle(0, 0, data.width, data.height, fill = "#EFEBE9")
@@ -379,7 +406,7 @@ class UI(object):
         elif data.inGame: self.drawGamePage(canvas, data)
 
         # game over page
-        elif data.reach2048 or data.cannotMove : self.drawGameOverPage(canvas, data)
+        elif data.reach2048 or data.cannotMove: self.drawGameOverPage(canvas, data)
 
     def AImove(self, data):
         print("AI playing")
@@ -401,9 +428,9 @@ class UI(object):
                     # move twice in each timer delay period
                     self.AImove(data)
                 else:
+                    data.inGame = False
                     if self.GameBoard.contains2048(): data.reach2048 = True
                     else: data.cannotMove = True
-                    print("Game Over!")
 
     def runGame(self, width, height): # tkinter starter code
         def redrawAllWrapper(canvas, data):

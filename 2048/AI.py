@@ -8,7 +8,7 @@ class AI(object):
     def __init__(self, GameBoard, level):
         self.size = GameBoard.size
         self.GameBoard = GameBoard
-        self.level = ["easy", "normal", "hard", "expert"][level]
+        self.level = ["easy", "normal", "hard"][level]
 
         # weight board assign the grids on board with weight 
         # in zigzag order increasing exponentially with base 4
@@ -277,7 +277,7 @@ class AI(object):
         return (bestScore, bestAction)
 
     def getMaxMove2(self):
-        (score, action) = self.expectiMaxieMove(4)
+        (score, action) = self.expectiMaxieMoveAlphaBeta(4, -float('inf'), float('inf'))
         # print("bestScore, bestAction:", (score, action))
         self.performAction(action)
 
@@ -285,14 +285,6 @@ class AI(object):
         self.GameBoard.addNewTile()
 
     def getMaxMove3(self):
-        (score, action) = self.expectiMaxieMoveAlphaBeta(5, -float('inf'), float('inf'))
-        # print("bestScore, bestAction:", (score, action))
-        self.performAction(action)
-
-        # in reality, computer still generates numbers on board randomly
-        self.GameBoard.addNewTile()
-
-    def getMaxMove4(self):
         # apply reinforcement learning
         print("有时间一定会做的")
         raise NotImplementedError

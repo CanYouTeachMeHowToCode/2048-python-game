@@ -36,6 +36,7 @@ class Board(object):
         # 2 occurs 80% and 4 occurs 20%
         addNum = random.choice([2, 2, 2, 2, 2, 2, 2, 4, 4, 2])
         self.board[addIndex[0]][addIndex[1]] = addNum
+        return addIndex, addNum
 
     def isSameBoard(self, board1, board2):
         if len(board1) != len(board2): return False
