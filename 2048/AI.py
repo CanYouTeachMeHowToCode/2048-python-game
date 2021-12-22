@@ -111,7 +111,7 @@ class AI(object):
         self.GameBoard.score = originalScore
 
         scoreList = [upScore, downScore, leftScore, rightScore]
-        # moving each direction has the same score
+        # moving randomly when each direction has the same score
         if (len(set(scoreList)) <= 1) : action = random.randint(0, 3)
         else: action = scoreList.index(max(scoreList))
         print("action: %d\n" % action)
@@ -285,7 +285,7 @@ class AI(object):
         self.GameBoard.addNewTile()
 
     def getMaxMove3(self):
-        # apply reinforcement learning
+        # apply deep reinforcement learning
         print("有时间一定会做的")
         raise NotImplementedError
 
