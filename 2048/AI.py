@@ -2,6 +2,7 @@
 
 import random
 import copy
+import math
 from board import Board
 
 class AI(object):
@@ -18,7 +19,7 @@ class AI(object):
             #  [4^8,   4^9,  4^10, 4^11],
             #  [4^15, 4^14,  4^13, 4^12]]
         # Reference: http://cs229.stanford.edu/proj2016/report/NieHouAn-AIPlays2048-report.pdf
-        def weightBoard(size):
+        def weightBoard1(size):
             board = [[(row * size + col) for col in range(size)] for row in range(size)]
             for row in range(size):
                 if row % 2 : board[row] = board[row][::-1]
@@ -27,14 +28,34 @@ class AI(object):
                     exp = board[row][col]
                     board[row][col] = 4 ** exp
             return board
-        self.weightBoard = weightBoard(self.size)
-        # print("weightBoard :", self.weightBoard)
+
+        # another weightBoard assign the grids on baord with weight that force 
+        # the grid to reach monotonicity
+        # e.g. for a weight board with size 4, the board weight is 
+            # [[4^3,   4^2,  4^1,   4^0],
+            #  [4^4,   4^3,  4^2,   4^1],
+            #  [4^5,   4^4,  4^3,   4^2],
+            #  [4^6,   4^5,  4^4,   4^3]]
+        # Reference: https://stackoverflow.com/questions/22342854/what-is-the-optimal-algorithm-for-the-game-2048/22389702#22389702
+        def weightBoard2(size):
+            board = [[2*(row + col) for col in range(size)] for row in range(size)]
+            for row in range(size):
+                board[row] = board[row][::-1]
+            for row in range(size):
+                for col in range(size):
+                    exp = board[row][col]
+                    board[row][col] = 4 ** exp
+            return board
+
+        self.weightBoard = weightBoard1(self.size)
+        print("self.weightBoard\n", self.weightBoard)
 
     def nextMove(self):
         if self.level == "easy": self.getMaxMove1()
         elif self.level == "normal": self.getMaxMove2()
         elif self.level == "hard" : self.getMaxMove3()
-        else: self.getMaxMove4() 
+        else: pass
+            # self.getMaxMove4() 
 
     def getLegalMoves(self):
         originalScore = self.GameBoard.score
@@ -120,8 +141,8 @@ class AI(object):
         # (fake computer minie move that just uses the normal method to add new numbers)
         self.GameBoard.addNewTile()
 
-    # using ExpectiMiniMax algorithm. 
-    # Reference : http://cs229.stanford.edu/proj2016/report/NieHouAn-AIPlays2048-report.pdf
+    # ExpectiMax & miniMax algorithm. 
+    # Reference: http://cs229.stanford.edu/proj2016/report/NieHouAn-AIPlays2048-report.pdf
 
     # the evaluate function estimates the current situation on the board and 
     # return a score that quantifies the situation. The evaluation algorithm
@@ -129,11 +150,18 @@ class AI(object):
     # certain tile and the number on it. 
     # (i.e. ∑(row)∑(col) weightBoard[row][col] * GameBoard[row][col])
 
+    # 2021.12.22 update: we should consider the number of merges for each move and the 
+    # number of empty tiles after each move of the player to be as many as possible in favor of the next move
+    # Reference: https://stackoverflow.com/questions/22342854/what-is-the-optimal-algorithm-for-the-game-2048/22389702#22389702
     def evaluate(self):
         score = 0
+        emptyTilesNum = 0
         for row in range(self.size):
             for col in range(self.size):
+                if not self.GameBoard.board[row][col]: emptyTilesNum += 1
                 score += (self.weightBoard[row][col] * self.GameBoard.board[row][col])
+        # score += math.log(1+emptyTilesNum)*3
+        score += emptyTilesNum
         return score
 
     # the method for computer that does not add the numbers "normally" --
@@ -144,6 +172,7 @@ class AI(object):
         assert(self.GameBoard.board[index[0]][index[1]] == 0)
         self.GameBoard.board[index[0]][index[1]] = addNum
 
+    ## ExpectiMax
     # player's move
     def expectiMaxieMove(self, depth):
         if not depth: return (self.evaluate(), None) # depth = 0
@@ -160,7 +189,7 @@ class AI(object):
         for action in actions:
             beforeMoveBoard = copy.deepcopy(self.GameBoard.board)
             self.performAction(action)
-            (computerScore, computerAction) = self.expectiMinnieMove(depth-1)
+            computerScore = self.expectiMinnieScore(depth)
             self.GameBoard.board = beforeMoveBoard
             self.GameBoard.score = originalScore
 
@@ -171,7 +200,7 @@ class AI(object):
         return (bestScore, bestAction)
 
     # computer's move
-    def expectiMinnieMove(self, depth):
+    def expectiMinnieScore(self, depth):
         if not depth: return (self.evaluate(), None) # depth = 0
 
         originalScore = self.GameBoard.score
@@ -193,21 +222,29 @@ class AI(object):
 
         if not actions: return (self.evaluate(), None) # no legal actions
 
-        (bestScore, bestAction) = (float('inf'), None)
+        # (bestScore, bestAction) = (float('inf'), None)
+        expectedScore = 0
 
         for action in actions:
+            addNum = action[1]
+            if addNum == 2: prob = 0.8
+            elif addNum == 4: prob = 0.2
+            else: assert(False) # should not reach here
+
             beforeMoveBoard = copy.deepcopy(self.GameBoard.board)
             self.addNewNum(action) # perform computer's action
-            (playerScore, playerAction) = self.expectiMaxieMove(depth-1)
+            (playerScore, _) = self.expectiMaxieMove(depth-1)
             self.GameBoard.board = beforeMoveBoard
             self.GameBoard.score = originalScore
 
-            if playerScore < bestScore:
-                bestScore = playerScore
-                bestAction = action
+            # if playerScore < bestScore:
+            #     bestScore = playerScore
+            #     bestAction = action
+            expectedScore += playerScore * prob
 
-        return (bestScore, bestAction)
+        return expectedScore
 
+    ## Minimax 
     # player's move with alpha-beta pruning
     def expectiMaxieMoveAlphaBeta(self, depth, alpha, beta):
         assert(alpha < beta)
@@ -276,8 +313,98 @@ class AI(object):
 
         return (bestScore, bestAction)
 
+    # importance pruning: only take the computer's actions that affect the player's next 
+    # move most negatively based on the weight of the empty tiles on the board. 
+    # Reference : http://cs229.stanford.edu/proj2016/report/NieHouAn-AIPlays2048-report.pdf
+
+    # the function to get these tiles with the greatest importance for computer's actions
+    def getImporantIndices(self, importance):
+        importantIndices = []
+        board = self.weightBoard
+        size = self.size
+        importance_cutoff = size**2 - importance
+        row_cutoff, col_cutoff = importance_cutoff//size, importance_cutoff%size
+        for i in range(size):
+            for j in range(size):
+                if board[i][j] >= board[row_cutoff][col_cutoff]: importantIndices.append((i, j))
+        return importantIndices
+
+    # player's move with alpha-beta pruning & importance pruning
+    def expectiMaxieMoveAlphaBetaImportance(self, depth, alpha, beta, importance):
+        assert(alpha < beta)
+        if not depth: return (self.evaluate(), None) # depth = 0
+
+        # get all legal actions and preserve the board
+        originalScore = self.GameBoard.score
+        actions = self.getLegalMoves()
+
+        if not actions: return (self.evaluate(), None) # no legal actions
+
+        (bestScore, bestAction) = (-float('inf'), None)
+
+        for action in actions:
+            beforeMoveBoard = copy.deepcopy(self.GameBoard.board)
+            self.performAction(action)
+            (computerScore, computerAction) = self.expectiMinnieMoveAlphaBetaImportance(depth-1, alpha, beta, importance)
+            self.GameBoard.board = beforeMoveBoard
+            self.GameBoard.score = originalScore
+
+            if computerScore > bestScore:
+                bestScore = computerScore
+                bestAction = action
+                alpha = max(alpha, bestScore)
+                if (alpha >= beta): break
+
+        return (bestScore, bestAction)
+
+    # computer's move with alpha-beta pruning & importance pruning
+    def expectiMinnieMoveAlphaBetaImportance(self, depth, alpha, beta, importance):
+        assert(alpha < beta)
+        if not depth: return (self.evaluate(), None) # depth = 0
+
+        originalScore = self.GameBoard.score
+        # even though the real computer will put the new numbers randomly,
+        # we still assume that it can put 2 or 4 on any empty tile as it 
+        # wishes to make the board harder for player to solve.
+
+        # mark the empty tiles with highest importances as "important"
+        importantIndices = self.getImporantIndices(importance)
+        emptyTiles = [] # tuple list => empty tile coordinates
+        for i in range(self.size):
+            for j in range(self.size):
+                # this tile is empty and is "important"
+                if not self.GameBoard.board[i][j] and (i, j) in importantIndices: 
+                    emptyTiles.append((i, j))
+        actions = []
+        for index in emptyTiles:
+            # can add 2 or 4 on any empty tile
+            actions.append((index, 2))
+            actions.append((index, 4))
+
+        if not actions: return (self.evaluate(), None) # no legal actions
+
+        (bestScore, bestAction) = (float('inf'), None)
+
+        for action in actions:
+            beforeMoveBoard = copy.deepcopy(self.GameBoard.board)
+            self.addNewNum(action) # perform computer's action
+            (playerScore, playerAction) = self.expectiMaxieMoveAlphaBetaImportance(depth-1, alpha, beta, importance)
+            self.GameBoard.board = beforeMoveBoard
+            self.GameBoard.score = originalScore
+
+            if playerScore < bestScore:
+                bestScore = playerScore
+                bestAction = action
+                beta = min(beta, bestScore)
+                if (alpha >= beta) : break
+
+        return (bestScore, bestAction)
+
     def getMaxMove2(self):
-        (score, action) = self.expectiMaxieMoveAlphaBeta(4, -float('inf'), float('inf'))
+        (score, action) = self.expectiMaxieMove(2)
+        # (score, action) = self.expectiMaxieMoveAlphaBetaImportance(5, -float('inf'), float('inf'), 8)
+        # (score, action) = self.expectiMaxieMoveAlphaBeta(5, -float('inf'), float('inf'))
+
         # print("bestScore, bestAction:", (score, action))
         self.performAction(action)
 
@@ -304,8 +431,8 @@ class AI(object):
             self.GameBoard.printBoard()
             print("current score: ", self.GameBoard.score)
             print("------------------------------------------------\n\n")
-        print("Game Over")
-
+        if self.GameBoard.contains2048(): return 1
+        else: return 0
 
 # test
 if __name__ == "__main__":
@@ -313,8 +440,15 @@ if __name__ == "__main__":
     # easyAI = AI(4, 0)
     # easyAI.playTheGame()
 
-    normalAI = AI(testBoard, 1)
-    normalAI.playTheGame()
+    # play ten times
+    record = []
+    for i in range(30):
+        testBoard = Board(4)
+        normalAI = AI(testBoard, 1)
+        record.append(normalAI.playTheGame())
+        print("record:", record)
+    winrate = sum(record)/len(record)
+    print("winrate: ", winrate)
 
     # hardAI = AI(4, 2)
     # hardAI.playTheGame()
