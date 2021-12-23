@@ -375,6 +375,9 @@ class UI(object):
         # reach 2048
         if data.reach2048: 
             canvas.create_rectangle(0, 0, data.width, data.height, fill = "#EEEBE9")
+            canvas.create_text(data.width / 2, data.height * 0.25, \
+                   text = "Game Score: "+ str(self.GameBoard.score), \
+                   font = "Arial 30 bold", fill = "purple")
             canvas.create_text(data.width / 2, data.height / 2, \
                                text = "Congratulations!", \
                                font = "Arial 50 bold", fill = "red")
@@ -388,6 +391,9 @@ class UI(object):
             canvas.create_text(data.width / 2, data.height / 2, \
                                text = "You LOSE", \
                                font = "Arial 50 bold", fill = "black")
+            canvas.create_text(data.width / 2, data.height * 0.25, \
+                   text = "Game Score: "+ str(self.GameBoard.score), \
+                   font = "Arial 30 bold", fill = "purple")
             canvas.create_text(data.width / 2, data.height * 0.75, \
                    text = "press 'r' to restart", \
                    font = "Arial 30 bold", fill = "purple")
