@@ -74,6 +74,8 @@ class UI(object):
         data.board = self.GameBoard.board
         data.cellSize = (data.width - data.margin * 2) / data.size
         data.timeCounter = 0
+        data.reach2048 = False
+        data.cannotMove = False
 
     def mousePressed(self, event, data):
         # three buttons in the start page
