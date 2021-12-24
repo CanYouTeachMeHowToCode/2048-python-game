@@ -29,23 +29,23 @@ class AI(object):
                     board[row][col] = 4 ** exp
             return board
 
-        # another weightBoard assign the grids on baord with weight that force 
-        # the grid to reach monotonicity
-        # e.g. for a weight board with size 4, the board weight is 
-            # [[4^3,   4^2,  4^1,   4^0],
-            #  [4^4,   4^3,  4^2,   4^1],
-            #  [4^5,   4^4,  4^3,   4^2],
-            #  [4^6,   4^5,  4^4,   4^3]]
-        # Reference: https://stackoverflow.com/questions/22342854/what-is-the-optimal-algorithm-for-the-game-2048/22389702#22389702
-        def weightBoard2(size):
-            board = [[2*(row + col) for col in range(size)] for row in range(size)]
-            for row in range(size):
-                board[row] = board[row][::-1]
-            for row in range(size):
-                for col in range(size):
-                    exp = board[row][col]
-                    board[row][col] = 4 ** exp
-            return board
+        # # another weightBoard assign the grids on baord with weight that force 
+        # # the grid to reach monotonicity
+        # # e.g. for a weight board with size 4, the board weight is 
+        #     # [[4^3,   4^2,  4^1,   4^0],
+        #     #  [4^4,   4^3,  4^2,   4^1],
+        #     #  [4^5,   4^4,  4^3,   4^2],
+        #     #  [4^6,   4^5,  4^4,   4^3]]
+        # # Reference: https://stackoverflow.com/questions/22342854/what-is-the-optimal-algorithm-for-the-game-2048/22389702#22389702
+        # def weightBoard2(size):
+        #     board = [[2*(row + col) for col in range(size)] for row in range(size)]
+        #     for row in range(size):
+        #         board[row] = board[row][::-1]
+        #     for row in range(size):
+        #         for col in range(size):
+        #             exp = board[row][col]
+        #             board[row][col] = 4 ** exp
+        #     return board
 
         self.weightBoard = weightBoard1(self.size)
 
