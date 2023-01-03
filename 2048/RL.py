@@ -7,6 +7,7 @@ import math
 import torch
 from torch import optim
 from torch import nn
+import torch.nn.functional as F
 import numpy as np
 
 from board import Board
@@ -14,19 +15,19 @@ from board import Board
 # Reference: https://github.com/navjindervirdee/2048-deep-reinforcement-learning
 # for deep reinforcement learning: currently only consider board with size 4 (can be improved later)
 
-# convert the input game board (or batch of game boards) into corresponding power of 2 tensor.
-def convertBoard2PowBoard(board):
-    batchSize = board.size()[0]
-    powerBoard = np.zeros(shape=(batchSize, 16, board.size()[1], board.size()[2]), dtype=np.float32) # 16 is for board size 4 (2^0 to 2^15)
-    for batchIndex in range(batchSize):
-        for i in range(board.size()[1]):
-            for j in range(board.size()[2]):
-                if not board[batchIndex][i][j]:
-                    powerBoard[batchIndex][0][i][j] = 1.0
-                else:
-                    power = int(math.log(board[batchIndex][i][j],2))
-                    powerBoard[batchIndex][power][i][j] = 1.0
-    return torch.from_numpy(powerBoard) # NCHW format, different from NHWC in tf
+# # convert the input game board (or batch of game boards) into corresponding power of 2 tensor.
+# def convertBoard2PowBoard(board):
+#     batchSize = board.size()[0]
+#     powerBoard = np.zeros(shape=(batchSize, 16, board.size()[1], board.size()[2]), dtype=np.float32) # 16 is for board size 4 (2^0 to 2^15)
+#     for batchIndex in range(batchSize):
+#         for i in range(board.size()[1]):
+#             for j in range(board.size()[2]):
+#                 if not board[batchIndex][i][j]:
+#                     powerBoard[batchIndex][0][i][j] = 1.0
+#                 else:
+#                     power = int(math.log(board[batchIndex][i][j],2))
+#                     powerBoard[batchIndex][power][i][j] = 1.0
+#     return torch.from_numpy(powerBoard).to(device) # NCHW format, different from NHWC in tf
 
 # find the number of empty tiles in the game board.
 def findEmptyTiles(board):
@@ -37,9 +38,11 @@ def findEmptyTiles(board):
                 count += 1
     return count
 
+# if gpu is to be used
+print("torch.cuda.is_available(): ", torch.cuda.is_available())
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 # Network Architecture
-depth1 = 128
-depth2 = 128
 batchSize = 512
 inputSize = 16 # board size
 hiddenSize = 256
@@ -48,68 +51,29 @@ outputSize = 4 # number of moves
 class MyPolicy(nn.Module):
     def __init__(self):
         super(MyPolicy, self).__init__()
-        self.Conv1A = nn.Sequential(         
-            nn.Conv2d(inputSize, depth1, kernel_size=(1, 2)),                              
-            nn.ReLU(),                        
-        )
-
-        self.Conv1B = nn.Sequential(         
-            nn.Conv2d(inputSize, depth1, kernel_size=(2, 1)),                              
-            nn.ReLU(),                     
-        )
-
-        self.Conv2A = nn.Sequential(         
-            nn.Conv2d(depth1, depth2, kernel_size=(1, 2)),                              
-            nn.ReLU(),                        
-        )
-
-        self.Conv2B = nn.Sequential(         
-            nn.Conv2d(depth1, depth2, kernel_size=(2, 1)),                              
-            nn.ReLU(),                        
-        )
-
-        self.L1 = nn.Sequential(
-            nn.Linear(4*3*depth1*2+2*4*depth2*2+3*3*depth2*2, hiddenSize),
-            nn.ReLU(),
-        )
-
-        self.out = nn.Sequential(         
-            nn.Linear(hiddenSize, outputSize),  
-            # nn.Softmax(0),                                                     
-        )
+        self.fc1 = nn.Linear(inputSize, hiddenSize)
+        self.fc1.weight.data.normal_(0, 0.01) # initialization
+        self.out = nn.Linear(hiddenSize, outputSize)
+        self.out.weight.data.normal_(0, 0.01) # initialization
 
     def forward(self, x):
-        # Convolutional layers
-        convA = self.Conv1A(x)
-        convB = self.Conv1B(x)
-        convAA = self.Conv2A(convA)
-        convAB = self.Conv2B(convA)
-        convBA = self.Conv2A(convB)
-        convBB = self.Conv2B(convB)
-
-        # Fully connected layers
-        hiddenA = torch.reshape(convA, (convA.size()[0], convA.size()[1]*convA.size()[2]*convA.size()[3]))
-        hiddenB = torch.reshape(convB, (convB.size()[0], convB.size()[1]*convB.size()[2]*convB.size()[3]))
-        hiddenAA = torch.reshape(convAA, (convAA.size()[0], convAA.size()[1]*convAA.size()[2]*convAA.size()[3]))
-        hiddenAB = torch.reshape(convAB, (convAB.size()[0], convAB.size()[1]*convAB.size()[2]*convAB.size()[3]))
-        hiddenBA = torch.reshape(convBA, (convBA.size()[0], convBA.size()[1]*convBA.size()[2]*convBA.size()[3]))
-        hiddenBB = torch.reshape(convBB, (convBB.size()[0], convBB.size()[1]*convBB.size()[2]*convBB.size()[3]))
-        hidden = torch.cat([hiddenA, hiddenB, hiddenAA, hiddenAB, hiddenBA, hiddenBB], dim=1)
-        hidden = self.L1(hidden)
-        out = self.out(hidden)
+        x = x.to(device)
+        x = self.fc1(x)
+        x = F.relu(x)
+        out = self.out(x)
         return out
 
 # helper function
 def save_policy(policyNet):
     torch.save(policyNet.state_dict(), "mypolicy.pth")
 
-def initWeightBias(layer):
-    if isinstance(layer, nn.Conv2d) or isinstance(layer, nn.Linear):
-        nn.init.kaiming_uniform_(layer.weight, mode='fan_in')
-        nn.init.zeros_(layer.bias)
+# def initWeightBias(layer):
+#     if isinstance(layer, nn.Conv2d) or isinstance(layer, nn.Linear):
+#         nn.init.kaiming_uniform_(layer.weight, mode='fan_in')
+#         nn.init.zeros_(layer.bias)
 
 policyNet = MyPolicy()
-policyNet.apply(initWeightBias)
+# policyNet.load_state_dict(torch.load("mypolicy.pth"))
 print("policyNet", policyNet)
 
 # # unit test
@@ -144,30 +108,27 @@ print("policyNet", policyNet)
 # print("torch.max(res, 1)[1].data.numpy()", torch.max(res, 1)[1].data.numpy())
 
 # Hyper Parameters
-LR = 5e-4 # learning rate
+LR = 5e-3 # learning rate
 GAMMA = 0.9 # reward discount
-EPSILON = 0.9 # for epsilon greedy algorithm
+EPSILON = 0.95 # for epsilon greedy algorithm
 # REPLAY_MEMORY, REPLAY_LABELS = [], []
 
 BATCH_SIZE = 512
-TARGET_REPLACE_ITER = 100   # target update frequenc
+TARGET_REPLACE_ITER = 200   # target update frequency
 MEMORY_CAPACITY = 6000
 
-num_episodes = 20000
+num_episodes = 100000
 
 # for episode with max score
 max_episode = -1
 max_score = -1
-
-# total iterations 
-total_iters = 1
 
 # total scores
 scores = []
 
 class DQN:
     def __init__(self):
-        self.eval_net, self.target_net = policyNet, policyNet
+        self.eval_net, self.target_net = policyNet.to(device), policyNet.to(device)
 
         self.learn_step_counter = 0                                     # for target updating
         self.memory_counter = 0                                         # for storing memory
@@ -176,7 +137,9 @@ class DQN:
         self.loss_func = nn.MSELoss()
 
     def chooseAction(self, GameBoard):
-        inputState = convertBoard2PowBoard(torch.from_numpy(np.expand_dims(GameBoard.board, axis=0)))
+        inputState = torch.from_numpy(np.expand_dims(np.array(GameBoard.board).flatten(), axis=0)).type('torch.FloatTensor')
+        # convertBoard2PowBoard(torch.from_numpy(np.expand_dims(GameBoard.board, axis=0)))
+        
         # input only one sample
         legalMoves = getLegalMoves(GameBoard)
         if np.random.uniform() <= EPSILON:   # greedy
@@ -185,7 +148,7 @@ class DQN:
             illegalMask = list(set([0, 1, 2, 3]).difference(set(legalMoves)))
             for i in illegalMask: actionsQvalue[0][i] = float('-inf')
             # print("actionsQvalue: ", actionsQvalue)
-            action = torch.max(actionsQvalue, 1)[1].data.numpy()[0] # action with maximum Q value
+            action = torch.max(actionsQvalue, 1)[1].cpu().data.numpy()[0] # action with maximum Q value
             # action = # action should be legal
         else:   # random
             action = random.choice(legalMoves)
@@ -208,16 +171,14 @@ class DQN:
         # sample batch transitions
         sample_index = np.random.choice(MEMORY_CAPACITY, BATCH_SIZE)
         b_memory = self.memory[sample_index, :]
-        b_s = torch.FloatTensor(b_memory[:, :inputSize])
-        b_s = b_s.reshape((BATCH_SIZE, 4, 4)) # reshape back to original 2D board
-        b_a = torch.LongTensor(b_memory[:, inputSize:inputSize+1].astype(int))
-        b_r = torch.FloatTensor(b_memory[:, inputSize+1:inputSize+2])
-        b_s_ = torch.FloatTensor(b_memory[:, -inputSize:])
-        b_s_ = b_s_.reshape((BATCH_SIZE, 4, 4)) # reshape back to original 2D board
+        b_s = torch.FloatTensor(b_memory[:, :inputSize]).to(device)
+        b_a = torch.LongTensor(b_memory[:, inputSize:inputSize+1].astype(int)).to(device)
+        b_r = torch.FloatTensor(b_memory[:, inputSize+1:inputSize+2]).to(device)
+        b_s_ = torch.FloatTensor(b_memory[:, -inputSize:]).to(device)
 
         # q_eval w.r.t the action in experience
-        q_eval = self.eval_net(convertBoard2PowBoard(b_s)).gather(1, b_a)  # shape (batch, 1)
-        q_next = self.target_net(convertBoard2PowBoard(b_s_)).detach()     # detach from graph, don't backpropagate
+        q_eval = self.eval_net(b_s).gather(1, b_a)  # shape (batch, 1)
+        q_next = self.target_net(b_s_).detach()     # detach from graph, don't backpropagate
         q_target = b_r + GAMMA * q_next.max(1)[0].view(BATCH_SIZE, 1)   # shape (batch, 1)
         loss = self.loss_func(q_eval, q_target)
         # print("loss", loss.item())
@@ -263,6 +224,23 @@ def getLegalMoves(GameBoard):
 
     return legalMoves
 
+def getWeightBoard(size):
+    board = [[(row * size + col) for col in range(size)] for row in range(size)]
+    for row in range(size):
+        if row % 2 : board[row] = board[row][::-1]
+    for row in range(size):
+        for col in range(size):
+            exp = board[row][col]
+            board[row][col] = 4 ** exp
+    return board
+
+def evaluateBoard(board, weightBoard):
+    score = 0
+    for row in range(len(board)):
+        for col in range(len(board)):
+            score += (board[row][col] * weightBoard[row][col])
+    return score
+
 def step(GameBoard, action):
     originalBoard = copy.deepcopy(GameBoard.board)
     originalScore = GameBoard.score
@@ -273,15 +251,14 @@ def step(GameBoard, action):
     else: assert(False) # should not reach here!
 
     newBoard = GameBoard.board
-    # Current Reward = number of merges + 0.1*log2(new maximum tile number)
+    # Current Reward = number of merges + log2(weighted board total score)
     mergeNum = findEmptyTiles(newBoard)-findEmptyTiles(originalBoard)
+    if not mergeNum: mergeNum = -math.log2(np.max(newBoard)) # penalty
     GameBoard.addNewTile()
-    # GameBoard.printBoard()
     newBoard = GameBoard.board
-    maxTile = np.max(newBoard)
-    reward = mergeNum+0.1*math.log2(maxTile)
-    # print("GameBoard.GameOver()", GameBoard.GameOver())
-    if GameBoard.GameOver(): done = True # need further checking
+    weightBoard = getWeightBoard(len(newBoard))
+    reward = mergeNum+math.log2(evaluateBoard(newBoard, weightBoard))
+    if GameBoard.GameOver(): done = True
     else: done = False
     moveScore = GameBoard.score - originalScore
     return GameBoard, reward, done, moveScore
@@ -306,6 +283,7 @@ def step(GameBoard, action):
 # print("reward: ", reward)
 # print("done: ", done)
 # print("moveScore: ", moveScore)
+# assert(False)
 
 ## training 
 print('\nCollecting experience...')
@@ -331,9 +309,9 @@ for episode in range(num_episodes):
         # score of the corresponding action
         totalScore += moveScore
         
-        # decrease the epsilon value during training
-        if (episode > 10000) or (EPSILON > 0.1 and total_iters%2500==0):
-            EPSILON = EPSILON/1.005
+        # # decrease the epsilon value during training
+        # if (episode > 10000) or (EPSILON > 0.1 and total_iters%2500==0):
+        #     EPSILON = EPSILON/1.005
        
         # store them in memory
         dqn.store_transition(GameBoard, action, reward, newGameBoard)
@@ -341,7 +319,6 @@ for episode in range(num_episodes):
         episode_reward += reward
 
         if dqn.memory_counter > MEMORY_CAPACITY:
-            print("Learning new experience...")
             dqn.learn()
             if done:
                 print('episode: ', episode,
@@ -370,5 +347,6 @@ def save_policy(policyNet):
     torch.save(policyNet.state_dict(), "mypolicy.pth")
 
 save_policy(policyNet)
+
 
 

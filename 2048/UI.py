@@ -160,6 +160,7 @@ class UI(object):
             data.selectingBoardSize = False
             data.levelSelectionMode = False
             data.inGame = False
+            data.AIstep = 0
 
         # customize size mode
         if data.customizeSizeMode:

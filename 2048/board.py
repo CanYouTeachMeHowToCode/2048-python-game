@@ -4,7 +4,7 @@ import random
 import copy
 
 class Board(object):
-    def __init__(self, size):
+    def __init__(self, size=4):
         # size default set to 4, but can be customized
         self.empty = 0 # 0 represents empty grid
         self.board = [[self.empty for _ in range(size)] for _ in range(size)]
@@ -210,7 +210,7 @@ class Board(object):
         print("reach here after game is over!")
 
 
-# # test 
+# test 
 if __name__ == "__main__":
     board = Board(4)
     board.printBoard()
@@ -277,15 +277,3 @@ if __name__ == "__main__":
         if canMove: board.addNewTile() 
         else: print("cannot move in this direction") 
         board.printBoard()
-
-#     print("----------------------------------------------------------------")
-#     print("move with commands:")
-#     board = Board(4)
-#     board.move()
-
-
-#     print("----------------------------------------------------------------")
-#     print("move with commands:")
-#     board = Board(5)
-#     board.move()
-
