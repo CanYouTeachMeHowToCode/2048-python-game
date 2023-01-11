@@ -37,8 +37,9 @@ class UI(object):
         data.inGame = False
 
         # game state settings (Game Over, Game Paused)
-        data.reach2048 = False
-        data.cannotMove = False
+        data.reach2048 = False # reach 2048 does not necessarily means game over here
+        data.continuePlaying = False # continue the game after reaching 2048
+        data.cannotMove = False # do not have any valid move means game over
         data.paused = False
 
         # time settings
@@ -75,6 +76,7 @@ class UI(object):
         data.cellSize = (data.width - data.margin * 2) / data.size
         data.timeCounter = 0
         data.reach2048 = False
+        data.continuePlaying = False
         data.cannotMove = False
 
     def mousePressed(self, event, data):
@@ -132,20 +134,9 @@ class UI(object):
                 data.inGame = True
 
     def keyPressed(self, event, data):
-        # press "shift + b" to return back to home page from anywhere
-        if event.keysym == "B": 
-            data.startPage = True
-            data.playerMode = False
-            data.AImode = False
-            data.customizeSizeMode = False
-            data.selectingBoardSize = False
-            data.levelSelectionMode = False
-            data.inGame = False
-            data.AIstep = 0
-
         # customize size mode
         if data.customizeSizeMode:
-            if data.selectingBoardSize and (event.keysym in string.digits):
+            if data.selectingBoardSize and event.keysym in string.digits:
                 if int(event.keysym) in range(4, 10):
                     data.size = int(event.keysym)
                 elif int(event.keysym) == 1: # enter 1 to represent size = 10
@@ -163,19 +154,18 @@ class UI(object):
             else:
                 # making moves based on the user's pressing keys
                 if not self.GameBoard.GameOver():
+                    if self.GameBoard.contains2048(): 
+                        data.reach2048 = True
+                        if not data.continuePlaying: data.inGame = False
+
                     canMove = False
-                    if data.paused: 
-                        print("the game is paused now! you cannot move until the game is unpaused")
+                    if data.paused: print("the game is paused now! you cannot move until the game is unpaused")
                     else:
                         direction = event.keysym
-                        if direction == "Up": 
-                            canMove = self.GameBoard.moveUp()
-                        elif direction == "Down":
-                            canMove = self.GameBoard.moveDown()
-                        elif direction == "Left":
-                            canMove = self.GameBoard.moveLeft()
-                        elif direction == "Right":
-                            canMove = self.GameBoard.moveRight()
+                        if direction == "Up": canMove = self.GameBoard.moveUp()
+                        elif direction == "Down": canMove = self.GameBoard.moveDown()
+                        elif direction == "Left": canMove = self.GameBoard.moveLeft()
+                        elif direction == "Right": canMove = self.GameBoard.moveRight()
 
                         # add a new number after each legal move
                         if canMove: 
@@ -187,19 +177,20 @@ class UI(object):
                     data.finishAdding = False # set to False for next move
 
                 else: 
-                    if self.GameBoard.contains2048(): data.reach2048 = True
-                    else: data.cannotMove = True
+                    data.cannotMove = True
                     data.inGame = False
                     print("Game Over!")
         else:
-            assert(not data.inGame)
             # restart the game only when the current game is over
-            if event.keysym == "r" :
+            if event.keysym == "r":
                 data.inGame = True
                 self.resetGameBoard(data)
+                if data.AImode: self.init(data) # for AI mode, directly return to the start page
 
-                # for AI mode, directly return to the start page
-                if data.AImode: self.init(data) 
+            # press c to continue playing the game
+            elif event.keysym == "c" and data.reach2048 and not data.cannotMove: 
+                data.inGame = True
+                data.continuePlaying = True
 
 ## Graphic drawing functions below
     # home page
@@ -285,6 +276,7 @@ class UI(object):
     def drawGamePage(self, canvas, data):
         canvas.create_rectangle(0, 0, data.width, data.height, fill="#EFEBE9")
         canvas.create_text(data.width//4, data.titlePlace//2, text="2048", font="Arial 60 bold", fill="#795548")
+        if data.reach2048: canvas.create_text(data.width//4, data.titlePlace*(3/4), text="Reached 2048", font="TimesNewRoman 30 bold", fill="red")
 
         if data.AImode: # AI mode
             canvas.create_text(data.width//2, data.titlePlace//2, text="Step:"+str(data.AIstep), font="Arial 23 bold", fill="purple")            
@@ -298,21 +290,22 @@ class UI(object):
             canvas.create_rectangle(0, data.height//3, data.width, data.height*(2/3), fill="gold")
             canvas.create_text(data.width//2, data.height//2, text="Game Paused!", font="TimesNewRoman 35 bold", fill="red")
 
+    def drawReach2048Page(self, canvas, data):
+        # reach 2048
+        canvas.create_rectangle(0, 0, data.width, data.height, fill="#EEEBE9")
+        canvas.create_text(data.width//2, data.height//4, text="Game Score: "+str(self.GameBoard.score), font="Arial 30 bold", fill="purple")
+        canvas.create_text(data.width//2, data.height//2, text="Congratulations!", font="Arial 50 bold", fill="red")
+        canvas.create_text(data.width//2, data.height*(3/5), text = "you get 2048 and WIN!", font="Arial 50 bold", fill="red")
+        canvas.create_text(data.width//2, data.height*(3/4), text="press 'r' to restart", font="Arial 30 bold", fill="purple")
+        # game over after reaching 2048
+        if not data.cannotMove: canvas.create_text(data.width//2, data.height*(4/5), text="press 'c' to continue", font="Arial 30 bold", fill="purple")
+
     # game over page  
     def drawGameOverPage(self, canvas, data):
-        # reach 2048
-        if data.reach2048: 
-            canvas.create_rectangle(0, 0, data.width, data.height*, fill="#EEEBE9")
-            canvas.create_text(data.width//2, data.height//4, text="Game Score: "+str(self.GameBoard.score), font="Arial 30 bold", fill="purple")
-            canvas.create_text(data.width//2, data.height//2, text="Congratulations!", font="Arial 50 bold", fill="red")
-            canvas.create_text(data.width//2, data.height*(3/5), text = "you get 2048 and WIN!", font="Arial 50 bold", fill="red")
-
-        # cannot have any legal moves before reach 2048
-        elif data.cannotMove:
-            canvas.create_rectangle(0, 0, data.width, data.height*, fill="#EEEBE9")
-            canvas.create_text(data.width//2, data.height//2, text="You LOSE", font="Arial 50 bold", fill="black")
-            canvas.create_text(data.width//2, data.height//4, text="Game Score: "+str(self.GameBoard.score), font="Arial 30 bold", fill="purple")
-            canvas.create_text(data.width//2, data.height*(3/4), text="press 'r' to restart", font="Arial 30 bold", fill="purple")
+        canvas.create_rectangle(0, 0, data.width, data.height, fill="#EEEBE9")
+        canvas.create_text(data.width//2, data.height//2, text="You LOSE", font="Arial 50 bold", fill="black")
+        canvas.create_text(data.width//2, data.height//4, text="Game Score: "+str(self.GameBoard.score), font="Arial 30 bold", fill="purple")
+        canvas.create_text(data.width//2, data.height*(3/4), text="press 'r' to restart", font="Arial 30 bold", fill="purple")
 
     def redrawAll(self, canvas, data):
         # start page
@@ -329,8 +322,11 @@ class UI(object):
         # in game page
         elif data.inGame: self.drawGamePage(canvas, data)
 
+        # reach 2048 page
+        elif data.reach2048: self.drawReach2048Page(canvas, data)
+
         # game over page
-        elif data.reach2048 or data.cannotMove: self.drawGameOverPage(canvas, data)
+        elif data.cannotMove: self.drawGameOverPage(canvas, data)
 
     def AImove(self, data):
         print("AI playing")

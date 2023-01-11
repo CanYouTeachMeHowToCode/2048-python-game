@@ -147,7 +147,7 @@ class Board(object):
         # the player get 2048
         if self.contains2048():
             print("\nCongratulations! you get 2048 and win!\n")
-            return True
+            # return True
 
         # the player cannot make any legal move before getting 2048
         boardU = copy.deepcopy(self.board)
@@ -171,9 +171,6 @@ class Board(object):
         self.board = boardR
         self.score = originalScore
 
-        # print("for this board, the moving direction can be (Up, Down, Left, Right):", \
-        #         (canMoveUp, canMoveDown, canMoveLeft, canMoveRight))
-        # print("\n")
         if not (canMoveUp or canMoveDown or canMoveLeft or canMoveRight):
             print("\nYou don't have any legal moves! Game Over!") 
             return True
