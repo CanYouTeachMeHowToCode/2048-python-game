@@ -9,7 +9,7 @@ class AI(object):
     def __init__(self, GameBoard, level):
         self.size = GameBoard.size
         self.GameBoard = GameBoard
-        self.level = ["easy", "normal", "hard", "custom"][level]
+        self.level = ["novice", "competent", "expert"][level]
 
         # weight board assign the grids on board with weight 
         # in zigzag order increasing exponentially with base 4
@@ -50,9 +50,9 @@ class AI(object):
         self.weightBoard = weightBoard1(self.size)
 
     def nextMove(self):
-        if self.level == "easy": self.getMaxMove1()
-        elif self.level == "normal": self.getMaxMove2()
-        elif self.level == "hard" : self.getMaxMove3()
+        if self.level == "novice": self.getMaxMove1()
+        elif self.level == "competent": self.getMaxMove2()
+        elif self.level == "expert" : self.getMaxMove3()
         else: self.getMaxMove4() 
 
     def getLegalMoves(self):

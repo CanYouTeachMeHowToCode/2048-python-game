@@ -81,74 +81,55 @@ class UI(object):
         # three buttons in the start page
         if data.startPage:
             # enter the player mode
-            if event.x in range(data.width//4, int(data.width*(3/4))) and \
-                event.y in range(data.height//2, int(data.height*(3/5))):
+            if data.width//4 <= event.x <= data.width*(3/4) and data.height//2 <= event.y <= data.height*(3/5):
                 data.playerMode = True
                 data.customizeSizeMode = True
                 data.startPage = False
 
             # enter the AI mode
-            elif event.x in range(data.width//4, int(data.width*(3/4))) and \
-                  event.y in range(int(data.height*(3/5+1/30)), int(data.height*(7/10+1/30))):
+            elif data.width//4 <= event.x <= data.width*(3/4) and data.height*(3/5+1/30) <= event.y <= data.height*(7/10+1/30):
                 data.AImode = True
                 data.customizeSizeMode = True
                 data.startPage = False
 
             # exit button
-            elif event.x in range(int(data.width*(5/6)), int(data.width*(29/30))) and \
-                 event.y in range(int(data.height*(9/10)), int(data.height*(29/30))):
+            elif data.width*(5/6) <= event.x <= data.width*(29/30) and data.height*(9/10) <= event.y <= data.height*(29/30):
                 sys.exit()
 
-            # clear mouse position after each manipulation
-            event.x, event.y = None, None
-
         # customize size page
-        if data.customizeSizeMode:
-            assert(not data.levelSelectionMode)
+        elif data.customizeSizeMode:
             # press the empty "size button" to enter the board size
-            if event.x in range(data.width//2, int(data.width*(3/4))) and \
-               event.y in range(data.height//2, int(data.height*(3/5))):
+            if data.width//2 <= event.x <= data.width*(3/4) and data.height//2 <= event.y <= data.height*(3/5):
                 data.selectingBoardSize = True
 
             # press the finish button to enter the game state
-            elif event.x in range(int(data.width*(3/8)), int(data.width*(5/8))) and \
-                 event.y in range(int(data.height*(1/4+1/15)), int(data.height*(7/20+1/15))):
+            elif data.width*(3/8) <= event.x <= data.width*(5/8) and data.height*(1/4+1/15) <= event.y <= data.height*(7/20+1/15):
                 self.resetGameBoard(data)
                 if data.AImode: data.levelSelectionMode = True
                 else: data.inGame = True
                 data.customizeSizeMode = False
 
-            # clear mouse position after each manipulation
-            event.x, event.y = None, None
-
         # level selection mode (only applicable for AI mode)
-        if data.levelSelectionMode:
-            assert(data.AImode and not data.playerMode and not data.customizeSizeMode)
-            # easy level
-            if event.x in range(data.width//4, int(data.width*(3/4))) and \
-                event.y in range(data.height//2, int(data.height*(3/5))):
+        elif data.levelSelectionMode:
+            assert(data.AImode and not data.playerMode)
+
+            # novice 
+            if data.width//4 <= event.x <= data.width*(3/4) and data.height//2 <= event.y <= data.height*(3/5):
                 data.AI = AI(self.GameBoard, 0)
                 data.levelSelectionMode = False
                 data.inGame = True
             
-            # normal level
-            elif event.x in range(data.width//4, int(data.width*(3/4))) and \
-                event.y in range(int(data.height*(3/5+1/30)), \
-                                int(data.height*(7/10+1/30))):
+            # competent
+            elif data.width//4 <= event.x <= data.width*(3/4) and data.height*(3/5+1/30) <= event.y <= data.height*(7/10+1/30):
                 data.AI = AI(self.GameBoard, 1)
                 data.levelSelectionMode = False
                 data.inGame = True
 
-            # hard level
-            elif event.x in range(data.width//4, int(data.width*(3/4))) and \
-                event.y in range(int(data.height*(7/10+1/15)), \
-                                int(data.height*(4/5+1/15))):
+            # expert
+            elif data.width//4 <= event.x <= data.width*(3/4) and data.height*(7/10+1/15) <= event.y <= data.height*(4/5+1/15):
                 data.AI = AI(self.GameBoard, 2)
                 data.levelSelectionMode = False
                 data.inGame = True
-
-            # clear mouse position after each manipulation
-            event.x, event.y = None, None
 
     def keyPressed(self, event, data):
         # press "shift + b" to return back to home page from anywhere
@@ -170,8 +151,6 @@ class UI(object):
                 elif int(event.keysym) == 1: # enter 1 to represent size = 10
                     data.size = 10
                 data.selectingBoardSize = False
-            else:
-                pass 
 
         # in game mode
         if data.inGame:
@@ -225,92 +204,61 @@ class UI(object):
 ## Graphic drawing functions below
     # home page
     def drawStartPage(self, canvas, data):
-        canvas.create_rectangle(0, 0, data.width, data.height, fill = "#ECEFF1")
-        canvas.create_text(data.width//2, data.height//4, text = "2048", \
-                            fill = "#FDD835", font = "Oswald 90 bold") 
-        canvas.create_text(data.width//2, 3*(data.height//8), text = "by Yilun Wu", \
-                            fill = "light coral", font = "Caladea 40") 
+        # start page
+        canvas.create_rectangle(0, 0, data.width, data.height, fill="#ECEFF1")
+        canvas.create_text(data.width//2, data.height//4, text="2048", fill="#FDD835", font="Oswald 90 bold") 
+        canvas.create_text(data.width//2, data.height*(3/8), text="by Yilun Wu", fill="light coral", font="Caladea 40") 
+
         # player mode button
-        canvas.create_rectangle(data.width//4, data.height//2, \
-                                data.width*(3/4), data.height*(3/5), 
-                                fill = "lemon chiffon")
-        canvas.create_text(data.width//2, data.height*(11/20), \
-                                text = "Player", font = "Arial 40 bold")
+        canvas.create_rectangle(data.width//4, data.height//2, data.width*(3/4), data.height*(3/5), fill="lemon chiffon")
+        canvas.create_text(data.width//2, data.height*(11/20), text="Player", font="Arial 40 bold")
 
         # AI mode button
-        canvas.create_rectangle(data.width//4, data.height*(3/5+1/30), \
-                                data.width*(3/4), data.height*(7/10+1/30), \
-                                fill = "lemon chiffon")
-        canvas.create_text(data.width//2, data.height*(13/20+1/30), \
-                                text = "AI", font = "Arial 40 bold")
+        canvas.create_rectangle(data.width//4, data.height*(3/5+1/30), data.width*(3/4), data.height*(7/10+1/30), fill="lemon chiffon")
+        canvas.create_text(data.width//2, data.height*(13/20+1/30), text="AI", font="Arial 40 bold")
 
         # settings button
-        canvas.create_rectangle(data.width//4, data.height*(7/10+1/15), \
-                                data.width*(3/4), data.height*(4/5+1/15), \
-                                fill = "lemon chiffon")
-        canvas.create_text(data.width//2, data.height*(3/4+1/15), \
-                                text = "Settings", font = "Arial 40 bold")
+        canvas.create_rectangle(data.width//4, data.height*(7/10+1/15), data.width*(3/4), data.height*(4/5+1/15), fill="lemon chiffon")
+        canvas.create_text(data.width//2, data.height*(3/4+1/15), text="Settings", font="Arial 40 bold")
 
-        #quit button
-        canvas.create_rectangle(data.width*(5/6), data.height*(9/10), \
-                                data.width*(29/30), data.height*(29/30),
-                                fill = "light grey")
-        canvas.create_text(data.width*(9/10), data.height*(14/15), \
-                                text = "Quit", font = "Arial 30 bold")
+        # quit button
+        canvas.create_rectangle(data.width*(5/6), data.height*(9/10), data.width*(29/30), data.height*(29/30), fill="light grey")
+        canvas.create_text(data.width*(9/10), data.height*(14/15), text="Quit", font="Arial 30 bold")
 
     # customize size page
     def drawCustomizeSizePage(self, canvas, data):
-        canvas.create_rectangle(0, 0, data.width, data.height, fill = "cyan")
-        canvas.create_text(data.width//2, data.height//4, \
-                            text = "Select Your Size Here!", \
-                            font = "Arial 50 bold", fill = "purple")
+        canvas.create_rectangle(0, 0, data.width, data.height, fill="cyan")
+        canvas.create_text(data.width//2, data.height//4, text="Select Your Size Here!", font="Arial 50 bold", fill="purple")
 
-        #Sizes (4-10)
-        canvas.create_text(data.width//4, data.height*(11/20), \
-                            text = "Board Size(Width):", font = "Arial 35")
+        # sizes (4-10)
+        canvas.create_text(data.width//4, data.height*(11/20), text="Board Size(Width):", font="Arial 30")
         if data.selectingBoardSize:
-            canvas.create_rectangle(data.width//2, data.height//2, \
-                                data.width*(3/4), data.height*(3/5), \
-                                fill = "light goldenrod")
+            canvas.create_rectangle(data.width//2, data.height//2, data.width*(3/4), data.height*(3/5), fill="light goldenrod")
         else:
-            canvas.create_rectangle(data.width//2, data.height//2, \
-                                data.width*(3/4), data.height*(3/5), \
-                                fill = "lemon chiffon")
-        canvas.create_text(data.width*(5/8), data.height*(11/20), \
-                            text = data.size, font = "Arial 35")
-        canvas.create_text(data.width*(7/8), data.height*(11/20), \
-                            text = "(4-10)", font = "Arial 35") 
+            canvas.create_rectangle(data.width//2, data.height//2, data.width*(3/4), data.height*(3/5), fill="lemon chiffon")
+        canvas.create_text(data.width*(5/8), data.height*(11/20), text=data.size, font="Arial 30")
+        canvas.create_text(data.width*(7/8), data.height*(11/20), text="(4-10)", font="Arial 30") 
 
         # finish button
-        canvas.create_rectangle(data.width*(3/8), data.height*(1/4+1/15), \
-                                data.width*(5/8), data.height*(7/20+1/15), \
-                                fill = "lemon chiffon")
-        canvas.create_text(data.width//2, data.height*(3/10+1/15), 
-                            text = "Finish!", font = "Arial 40")
+        canvas.create_rectangle(data.width*(3/8), data.height*(1/4+1/15), data.width*(5/8), data.height*(7/20+1/15), fill="lemon chiffon")
+        canvas.create_text(data.width//2, data.height*(3/10+1/15), text="Finish!", font="Arial 35")
 
     # AI mode level selection page
     def drawLevelSelectionPage(self, canvas, data):
-        canvas.create_rectangle(0, 0, data.width, data.height, fill = "cyan")
-        canvas.create_text(data.width//2, data.height//4, text = "Select a Level!", \
-                            font = "Arial 55 bold", fill = "purple")
-        # easy mode
-        canvas.create_rectangle(data.width//4, data.height//2, \
-                                data.width*(3/4), data.height*(3/5), 
-                                fill = "lemon chiffon")
-        canvas.create_text(data.width//2, data.height*(11/20), text = "Easy", \
-                            font = "Arial 35 bold")
-        # normal mode
-        canvas.create_rectangle(data.width//4, data.height*(3/5+1/30), \
-                                data.width*(3/4), data.height*(7/10+1/30), \
-                                fill = "lemon chiffon")
-        canvas.create_text(data.width//2, data.height*(13/20+1/30), \
-                            text = "Normal", font = "Arial 35 bold")
-        # hard mode
-        canvas.create_rectangle(data.width//4, data.height*(7/10+1/15), \
-                                data.width*(3/4), data.height*(4/5+1/15), \
-                                fill = "lemon chiffon")
-        canvas.create_text(data.width//2, data.height*(3/4+1/15), 
-                            text = "Hard", font = "Arial 35 bold")
+        canvas.create_rectangle(0, 0, data.width, data.height, fill="cyan")
+        canvas.create_text(data.width//2, data.height//4, text="Select a Level!", font="Arial 55 bold", fill="purple")
+
+        # novice mode
+        canvas.create_rectangle(data.width//4, data.height//2, data.width*(3/4), data.height*(3/5), fill="lemon chiffon")
+        canvas.create_text(data.width//2, data.height*(11/20), text="Novice", font="Arial 35 bold")
+
+        # competent mode
+        canvas.create_rectangle(data.width//4, data.height*(3/5+1/30), data.width*(3/4), data.height*(7/10+1/30), fill="lemon chiffon")
+        canvas.create_text(data.width//2, data.height*(13/20+1/30), text="Competent", font="Arial 35 bold")
+
+        # expert mode
+        canvas.create_rectangle(data.width//4, data.height*(7/10+1/15), data.width*(3/4), data.height*(4/5+1/15), fill="lemon chiffon")
+        canvas.create_text(data.width//2, data.height*(3/4+1/15), text="Expert", font="Arial 35 bold")
 
     # game page
     def drawCell(self, canvas, data, row, col):
@@ -318,17 +266,11 @@ class UI(object):
         currNum = data.board[row][col]
         cellBoundsWidth = 2.5
         if (row, col) == data.newTileIndex and not data.finishAdding: # new added tile with contrasting color
-            canvas.create_rectangle(data.margin + data.cellSize*col, data.margin + \
-            data.titlePlace + data.cellSize*row, data.margin + data.cellSize*(col+1), \
-            data.margin + data.titlePlace + data.cellSize*(row+1), \
-            fill = "cyan", width = cellBoundsWidth)
+            canvas.create_rectangle(data.margin+data.cellSize*col, data.margin+data.titlePlace+data.cellSize*row, data.margin+data.cellSize*(col+1), data.margin+data.titlePlace+data.cellSize*(row+1), fill="cyan", width=cellBoundsWidth)
             data.finishAdding = True
             data.newTileIndex = None, None
         else:
-            canvas.create_rectangle(data.margin + data.cellSize*col, data.margin + \
-            data.titlePlace + data.cellSize*row, data.margin + data.cellSize*(col+1), \
-            data.margin + data.titlePlace + data.cellSize*(row+1), \
-            fill = data.colors[currNum], width = cellBoundsWidth)
+            canvas.create_rectangle(data.margin+data.cellSize*col, data.margin+data.titlePlace+data.cellSize*row, data.margin+data.cellSize*(col+1), data.margin+data.titlePlace+data.cellSize*(row+1), fill=data.colors[currNum], width=cellBoundsWidth)
 
     def drawBoard(self, canvas, data):
         # draw the board by filling every cells(using draw cells)
@@ -337,67 +279,40 @@ class UI(object):
                 self.drawCell(canvas, data, row, col)
                 if data.board[row][col]:
                     textSize = 180 // data.size
-                    canvas.create_text(data.margin + data.cellSize/2 + 
-                        col*data.cellSize, data.titlePlace + data.margin + 
-                        data.cellSize/2 + row*data.cellSize, 
-                        text = data.board[row][col], \
-                        font = ("Arial", textSize), fill = "black") 
+                    canvas.create_text(data.margin+data.cellSize/2+col*data.cellSize, data.titlePlace+data.margin+data.cellSize/2+row*data.cellSize, text=data.board[row][col], font = ("Arial", textSize), fill="black") 
 
 
     def drawGamePage(self, canvas, data):
-        canvas.create_rectangle(0, 0, data.width, data.height, fill = "#EFEBE9")
-        canvas.create_text(data.width / 4, data.titlePlace / 2, 
-                            text = "2048", \
-                            font = "Arial 60 bold", fill = "#795548")
+        canvas.create_rectangle(0, 0, data.width, data.height, fill="#EFEBE9")
+        canvas.create_text(data.width//4, data.titlePlace//2, text="2048", font="Arial 60 bold", fill="#795548")
 
         if data.AImode: # AI mode
-            canvas.create_text((data.width / 2), data.titlePlace / 2, 
-                                text = "Step:" + str(data.AIstep) ,\
-                                font = "Arial 23 bold", fill = "purple")            
+            canvas.create_text(data.width//2, data.titlePlace//2, text="Step:"+str(data.AIstep), font="Arial 23 bold", fill="purple")            
         else: # player mode
-            canvas.create_text((data.width / 2), data.titlePlace / 2, 
-                                text = "Time:" + str(data.timeCounter) ,\
-                                font = "Arial 23 bold", fill = "purple")
-
-        canvas.create_text((data.width * 0.75), data.titlePlace / 2, 
-                            text = "Score:" + str(self.GameBoard.score) ,\
-                            font = "Arial 23 bold", fill = "purple")
+            canvas.create_text(data.width//2, data.titlePlace//2, text= "Time:"+str(data.timeCounter), font="Arial 23 bold", fill="purple")
+        canvas.create_text(data.width*(3/4), data.titlePlace//2, text="Score:"+str(self.GameBoard.score), font="Arial 23 bold", fill="purple")
         self.drawBoard(canvas, data)
 
         # Game paused
         if data.paused: 
-            canvas.create_rectangle(0, data.height/3, data.width, \
-                                            data.height*(2/3), fill = "gold")
-            canvas.create_text(data.width/2, data.height/2, text = "Game Paused!",\
-                                font = "TimesNewRoman 35 bold", fill = "red")
+            canvas.create_rectangle(0, data.height//3, data.width, data.height*(2/3), fill="gold")
+            canvas.create_text(data.width//2, data.height//2, text="Game Paused!", font="TimesNewRoman 35 bold", fill="red")
 
     # game over page  
     def drawGameOverPage(self, canvas, data):
         # reach 2048
         if data.reach2048: 
-            canvas.create_rectangle(0, 0, data.width, data.height, fill = "#EEEBE9")
-            canvas.create_text(data.width / 2, data.height * 0.25, \
-                   text = "Game Score: "+ str(self.GameBoard.score), \
-                   font = "Arial 30 bold", fill = "purple")
-            canvas.create_text(data.width / 2, data.height / 2, \
-                               text = "Congratulations!", \
-                               font = "Arial 50 bold", fill = "red")
-            canvas.create_text(data.width / 2, data.height * 0.6, \
-                               text = "you get 2048 and WIN!", \
-                               font = "Arial 50 bold", fill = "red")
+            canvas.create_rectangle(0, 0, data.width, data.height*, fill="#EEEBE9")
+            canvas.create_text(data.width//2, data.height//4, text="Game Score: "+str(self.GameBoard.score), font="Arial 30 bold", fill="purple")
+            canvas.create_text(data.width//2, data.height//2, text="Congratulations!", font="Arial 50 bold", fill="red")
+            canvas.create_text(data.width//2, data.height*(3/5), text = "you get 2048 and WIN!", font="Arial 50 bold", fill="red")
 
         # cannot have any legal moves before reach 2048
         elif data.cannotMove:
-            canvas.create_rectangle(0, 0, data.width, data.height, fill = "#EEEBE9")
-            canvas.create_text(data.width / 2, data.height / 2, \
-                               text = "You LOSE", \
-                               font = "Arial 50 bold", fill = "black")
-            canvas.create_text(data.width / 2, data.height * 0.25, \
-                   text = "Game Score: "+ str(self.GameBoard.score), \
-                   font = "Arial 30 bold", fill = "purple")
-            canvas.create_text(data.width / 2, data.height * 0.75, \
-                   text = "press 'r' to restart", \
-                   font = "Arial 30 bold", fill = "purple")
+            canvas.create_rectangle(0, 0, data.width, data.height*, fill="#EEEBE9")
+            canvas.create_text(data.width//2, data.height//2, text="You LOSE", font="Arial 50 bold", fill="black")
+            canvas.create_text(data.width//2, data.height//4, text="Game Score: "+str(self.GameBoard.score), font="Arial 30 bold", fill="purple")
+            canvas.create_text(data.width//2, data.height*(3/4), text="press 'r' to restart", font="Arial 30 bold", fill="purple")
 
     def redrawAll(self, canvas, data):
         # start page
