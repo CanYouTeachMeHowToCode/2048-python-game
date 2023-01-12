@@ -9,7 +9,7 @@ class AI(object):
     def __init__(self, GameBoard, level):
         self.size = GameBoard.size
         self.GameBoard = GameBoard
-        self.level = ["novice", "competent", "expert"][level]
+        self.level = ["novice", "competent", "proficient", "expert"][level]
 
         # weight board assign the grids on board with weight 
         # in zigzag order increasing exponentially with base 4
@@ -49,11 +49,12 @@ class AI(object):
 
         self.weightBoard = weightBoard1(self.size)
 
-    def nextMove(self):
+    def nextMove(self): # including both the optimal move of AI agent and the random move from computer
         if self.level == "novice": self.getMaxMove1()
         elif self.level == "competent": self.getMaxMove2()
-        elif self.level == "expert" : self.getMaxMove3()
-        else: self.getMaxMove4() 
+        elif self.level == "proficient": self.getMaxMove3()
+        elif self.level == "expert": self.getMaxMove4() 
+
 
     def getLegalMoves(self):
         originalScore = self.GameBoard.score
@@ -97,60 +98,41 @@ class AI(object):
         elif action == 2: self.GameBoard.moveLeft()
         elif action == 3: self.GameBoard.moveRight()
         else: assert(False) # should not reach here!
-
-    # using simple algorithm that only counts the current step that can reach 
-    # the highest score
-    def getMaxMove1(self):
-        assert(not self.GameBoard.GameOver())
-        # maxie move
-        upScore = downScore = leftScore = rightScore = -1
-        originalScore = self.GameBoard.score
-        boardU = copy.deepcopy(self.GameBoard.board)
-        boardD = copy.deepcopy(self.GameBoard.board)
-        boardL = copy.deepcopy(self.GameBoard.board)
-        boardR = copy.deepcopy(self.GameBoard.board)
-        canMoveUp = self.GameBoard.moveUp()
-        if canMoveUp: upScore = self.GameBoard.score - originalScore
-        self.GameBoard.board = boardU
-        self.GameBoard.score = originalScore
-
-        canMoveDown = self.GameBoard.moveDown()
-        if canMoveUp: downScore = self.GameBoard.score - originalScore
-        self.GameBoard.board = boardD
-        self.GameBoard.score = originalScore
-
-        canMoveLeft = self.GameBoard.moveLeft()
-        if canMoveLeft: leftScore = self.GameBoard.score - originalScore
-        self.GameBoard.board = boardL
-        self.GameBoard.score = originalScore
-
-        canMoveRight = self.GameBoard.moveRight()
-        if canMoveRight: rightScore = self.GameBoard.score - originalScore
-        self.GameBoard.board = boardR
-        self.GameBoard.score = originalScore
-
-        scoreList = [upScore, downScore, leftScore, rightScore]
-        # moving randomly when each direction has the same score
-        if (len(set(scoreList)) <= 1) : action = random.randint(0, 3)
-        else: action = scoreList.index(max(scoreList))
-        print("action: %d\n" % action)
-        self.performAction(action)
-
-        # (fake computer minie move that just uses the normal method to add new numbers)
+        # in reality, computer still generates numbers on board randomly
         self.GameBoard.addNewTile()
 
-    # ExpectiMax & miniMax algorithm. 
-    # Reference: http://cs229.stanford.edu/proj2016/report/NieHouAn-AIPlays2048-report.pdf
+    # Novice AI: greedy search based on game board scores
+    def getMaxMove1(self):
+        actions = self.getLegalMoves()
+        if not actions: return None # no legal actions
+        originalScore = self.GameBoard.score
+        
+        bestScore, bestActions = -float('inf'), []
+        for action in actions:
+            beforeMoveBoard = copy.deepcopy(self.GameBoard.board)
+            self.performAction(action)
+            score = self.GameBoard.score - originalScore
+            self.GameBoard.board = beforeMoveBoard
+            self.GameBoard.score = originalScore
+            
+            if score > bestScore:
+                bestActions = [action]
+                bestScore = score
+            elif score == bestScore:
+                bestActions.append(action)
 
-    # the evaluate function estimates the current situation on the board and 
-    # return a score that quantifies the situation. The evaluation algorithm
-    # is that the score is equal to the sum of the product of weight of a 
-    # certain tile and the number on it. 
-    # (i.e. ∑(row)∑(col) weightBoard[row][col] * GameBoard[row][col])
+        bestAction = random.choice(bestActions) if bestActions else random.choice(legalMoves)
+        print("action: %d\n" % bestAction)
+        self.performAction(bestAction)
 
-    # 2021.12.22 update: we should consider the number of merges for each move and the 
-    # number of empty tiles after each move of the player to be as many as possible in favor of the next move
-    # Reference: https://stackoverflow.com/questions/22342854/what-is-the-optimal-algorithm-for-the-game-2048/22389702#22389702
+    '''
+    the evaluate function estimates the current situation on the board and 
+    return a score that quantifies the situation. The evaluation algorithm
+    is that the score is equal to the sum of the product of weight of a 
+    certain tile and the number on it. 
+    (i.e. ∑(row)∑(col) weightBoard[row][col] * GameBoard[row][col])
+    '''
+
     def evaluate(self):
         score = 0
         emptyTilesNum = 0
@@ -162,15 +144,48 @@ class AI(object):
         score += emptyTilesNum
         return score
 
-    # the method for computer that does not add the numbers "normally" --
-    # add the number based on the current game board situation
+    # Competent AI: greedy search based on game board scores with weights
+    def getMaxMove2(self):
+        actions = self.getLegalMoves()
+        if not actions: return None # no legal actions
+        originalScore = self.GameBoard.score
+        
+        bestScore, bestActions = -float('inf'), []
+        for action in actions:
+            beforeMoveBoard = copy.deepcopy(self.GameBoard.board)
+            self.performAction(action)
+            score = self.evaluate()
+            self.GameBoard.board = beforeMoveBoard
+            self.GameBoard.score = originalScore
+            
+            if score > bestScore:
+                bestActions = [action]
+                bestScore = score
+            elif score == bestScore:
+                bestActions.append(action)
+
+        bestAction = random.choice(bestActions) if bestActions else random.choice(legalMoves)
+        print("action: %d\n" % bestAction)
+        self.performAction(bestAction)
+            
+    ### ExpectiMax & miniMax algorithm. 
+    # Reference: http://cs229.stanford.edu/proj2016/report/NieHouAn-AIPlays2048-report.pdf
+    
+    '''
+    2021.12.22 update: we should consider the number of merges for each move and the 
+    number of empty tiles after each move of the player to be as many as possible in favor of the next move
+    Reference: https://stackoverflow.com/questions/22342854/what-is-the-optimal-algorithm-for-the-game-2048/22389702#22389702
+    '''
+
+    ## ExpectiMax
+
+    # the method for computer that does not add the numbers "normally" -- add the number based on the current game board situation
     def addNewNum(self, action):  
         index = action[0]
         addNum = action[1]
         assert(self.GameBoard.board[index[0]][index[1]] == 0)
         self.GameBoard.board[index[0]][index[1]] = addNum
 
-    ## ExpectiMax
     # player's move
     def expectiMaxieMove(self, depth, importance):
         if not depth: return (self.evaluate(), None) # depth = 0
@@ -402,7 +417,7 @@ class AI(object):
 
         return (bestScore, bestAction)
 
-    def getMaxMove2(self):
+    def getMaxMove3(self):
         # (score, action) = self.expectiMaxieMove(3, 8)
         (score, action) = self.maxieMoveAlphaBetaImportance(5, -float('inf'), float('inf'), 12)
         # (score, action) = self.expectiMaxieMoveAlphaBeta(5, -float('inf'), float('inf'))
@@ -410,10 +425,7 @@ class AI(object):
         # print("bestScore, bestAction:", (score, action))
         self.performAction(action)
 
-        # in reality, computer still generates numbers on board randomly
-        self.GameBoard.addNewTile()
-
-    def getMaxMove3(self):
+    def getMaxMove4(self):
         # apply deep reinforcement learning
         print("有时间一定会做的")
         raise NotImplementedError
@@ -429,7 +441,7 @@ class AI(object):
             step += 1
             print("step:%d\n" % step)
             self.nextMove()
-            print("\n----------board after move----------------------:")
+            print("\n-----------------------------board after move:")
             self.GameBoard.printBoard()
             print("current score: ", self.GameBoard.score)
             print("------------------------------------------------\n\n")
@@ -438,24 +450,56 @@ class AI(object):
 
 # test
 if __name__ == "__main__":
-    testBoard = Board(4)
-    # easyAI = AI(4, 0)
-    # easyAI.playTheGame()
-
-    # play thirty times
+    # novice AI play 100 times
     record = []
     scores = []
-    for i in range(30):
+    for i in range(100):
         testBoard = Board(4)
-        normalAI = AI(testBoard, 1)
-        record.append(normalAI.playTheGame()[0])
-        print("record:", record)
-        scores.append(normalAI.playTheGame()[1])
-        print("scores:", scores)
+        noviceAI = AI(testBoard, 0)
+        res = noviceAI.playTheGame()
+        record.append(res[0])
+        scores.append(res[1])
+    print("Novice AI:")
+    print("record:", record)
+    print("scores:", scores)
+    avgscore = sum(scores)/len(scores)
+    print("average score: ", avgscore)
     winrate = sum(record)/len(record)
     print("winrate: ", winrate)
 
-    # hardAI = AI(4, 2)
-    # hardAI.playTheGame()
+    # competent AI play 100 times
+    record = []
+    scores = []
+    for i in range(100):
+        testBoard = Board(4)
+        competentAI = AI(testBoard, 1)
+        res = competentAI.playTheGame()
+        record.append(res[0])
+        scores.append(res[1])
+    print("Competent AI:")
+    print("record:", record)
+    print("scores:", scores)
+    avgscore = sum(scores)/len(scores)
+    print("average score: ", avgscore)
+    winrate = sum(record)/len(record)
+    print("winrate: ", winrate)
+
+    # proficient AI play 20 times
+    record = []
+    scores = []
+    for i in range(20):
+        testBoard = Board(4)
+        competentAI = AI(testBoard, 2)
+        res = competentAI.playTheGame()
+        record.append(res[0])
+        scores.append(res[1])
+    print("Proficient AI:")
+    print("record:", record)
+    print("scores:", scores)
+    avgscore = sum(scores)/len(scores)
+    print("average score: ", avgscore)
+    winrate = sum(record)/len(record)
+    print("winrate: ", winrate)
+
 
 
