@@ -154,7 +154,7 @@ class UI(object):
             else:
                 # making moves based on the user's pressing keys
                 if not self.GameBoard.GameOver():
-                    if self.GameBoard.contains2048(): 
+                    if self.GameBoard.reaches2048(): 
                         data.reach2048 = True
                         if not data.continuePlaying: data.inGame = False
 
@@ -349,7 +349,7 @@ class UI(object):
                     self.AImove(data)
                 else:
                     data.inGame = False
-                    if self.GameBoard.contains2048(): data.reach2048 = True
+                    if self.GameBoard.reaches2048(): data.reach2048 = True
                     else: data.cannotMove = True
 
     def runGame(self, width, height): # tkinter starter code

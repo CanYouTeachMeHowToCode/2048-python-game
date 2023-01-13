@@ -9,7 +9,7 @@ class AI(object):
     def __init__(self, GameBoard, level):
         self.size = GameBoard.size
         self.GameBoard = GameBoard
-        self.level = ["novice", "competent", "proficient", "expert"][level]
+        self.level = ["novice", "advanced beginner", "competent", "proficient", "expert"][level]
 
         # weight board assign the grids on board with weight 
         # in zigzag order increasing exponentially with base 4
@@ -51,10 +51,10 @@ class AI(object):
 
     def nextMove(self): # including both the optimal move of AI agent and the random move from computer
         if self.level == "novice": self.getMaxMove1()
-        elif self.level == "competent": self.getMaxMove2()
-        elif self.level == "proficient": self.getMaxMove3()
-        elif self.level == "expert": self.getMaxMove4() 
-
+        elif self.level == "advanced beginner": self.getMaxMove2()
+        elif self.level == "competent": self.getMaxMove3()
+        elif self.level == "proficient": self.getMaxMove4()
+        elif self.level == "expert": self.getMaxMove5() 
 
     def getLegalMoves(self):
         originalScore = self.GameBoard.score
@@ -135,16 +135,12 @@ class AI(object):
 
     def evaluate(self):
         score = 0
-        emptyTilesNum = 0
         for row in range(self.size):
             for col in range(self.size):
-                if not self.GameBoard.board[row][col]: emptyTilesNum += 1
                 score += (self.weightBoard[row][col] * self.GameBoard.board[row][col])
-        # score += math.log(1+emptyTilesNum)*3
-        score += emptyTilesNum
         return score
 
-    # Competent AI: greedy search based on game board scores with weights
+    # Advanced Beginner AI: greedy search based on game board scores with weights
     def getMaxMove2(self):
         actions = self.getLegalMoves()
         if not actions: return None # no legal actions
@@ -222,12 +218,6 @@ class AI(object):
         # we still assume that it can put 2 or 4 on any empty tile as it 
         # wishes to make the board harder for player to solve.
 
-        # emptyTiles = [] # tuple list => empty tile coordinates
-        # for i in range(self.size):
-        #     for j in range(self.size):
-        #         if not self.GameBoard.board[i][j]: # this tile is empty
-        #             emptyTiles.append((i, j))
-
         importantIndices = self.getImporantIndices(importance)
         emptyTiles = [] # tuple list => empty tile coordinates
         for i in range(self.size):
@@ -261,7 +251,7 @@ class AI(object):
 
         return expectedScore
 
-    ## Minimax 
+    ## Minimax with alpha-beta pruning
     # player's move with alpha-beta pruning
     def maxieMoveAlphaBeta(self, depth, alpha, beta):
         assert(alpha < beta)
@@ -330,21 +320,25 @@ class AI(object):
 
         return (bestScore, bestAction)
 
-    # importance pruning: only take the computer's actions that affect the player's next 
-    # move most negatively based on the weight of the empty tiles on the board. 
+    # importance pruning: only take the computer's actions that affect the player's next move most negatively based on the weight of the empty tiles on the board. 
     # Reference : http://cs229.stanford.edu/proj2016/report/NieHouAn-AIPlays2048-report.pdf
 
-    # the function to get these tiles with the greatest importance for computer's actions
-    def getImporantIndices(self, importance):
-        importantIndices = []
-        board = self.weightBoard
-        size = self.size
-        importance_cutoff = size**2 - importance
-        row_cutoff, col_cutoff = importance_cutoff//size, importance_cutoff%size
-        for i in range(size):
-            for j in range(size):
-                if board[i][j] >= board[row_cutoff][col_cutoff]: importantIndices.append((i, j))
-        return importantIndices
+    '''
+    2023.01.12 update: we consider only some most important empty tiles, where importance is proportional to the weight attached to a tile; according to the
+    conclusion of the paper, to consider four or fewer empty tiles at each depth could better balance the need for both high score and running time.
+    To be more specific, for maximum depth of 4, the search tree considers no more than 4 empty tiles at first layer; 
+    then it considers no more than 3 empty tiles at one layer down; in the last but one layer it would consider at most one empty tile.
+    '''
+
+    # the function to get most important tiles for computer's actions 
+
+    def getImporantTiles(self, importance): # importance => number of important tiles we consider (in current layer)
+        emptyTiles = [] # tuple list => empty tile coordinates
+        for i in range(self.size):
+            for j in range(self.size):
+                if not self.GameBoard.board[i][j]: emptyTiles.append((i, j))
+        importantTiles = sorted(emptyTiles, key=lambda coord:self.weightBoard[coord[0]][coord[1]], reverse=True)[:importance] # len(importantTiles) == importance
+        return importantTiles
 
     # player's move with alpha-beta pruning & importance pruning
     def maxieMoveAlphaBetaImportance(self, depth, alpha, beta, importance):
@@ -362,7 +356,7 @@ class AI(object):
         for action in actions:
             beforeMoveBoard = copy.deepcopy(self.GameBoard.board)
             self.performAction(action)
-            (computerScore, computerAction) = self.minnieMoveAlphaBetaImportance(depth-1, alpha, beta, importance)
+            (computerScore, computerAction) = self.minnieMoveAlphaBetaImportance(depth-1, alpha, beta, importance-1)
             self.GameBoard.board = beforeMoveBoard
             self.GameBoard.score = originalScore
 
@@ -385,15 +379,9 @@ class AI(object):
         # wishes to make the board harder for player to solve.
 
         # mark the empty tiles with highest importances as "important"
-        importantIndices = self.getImporantIndices(importance)
-        emptyTiles = [] # tuple list => empty tile coordinates
-        for i in range(self.size):
-            for j in range(self.size):
-                # this tile is empty and is "important"
-                if not self.GameBoard.board[i][j] and (i, j) in importantIndices: 
-                    emptyTiles.append((i, j))
+        importantTiles = self.getImporantTiles(importance)
         actions = []
-        for index in emptyTiles:
+        for index in importantTiles:
             # can add 2 or 4 on any empty tile
             actions.append((index, 2))
             actions.append((index, 4))
@@ -405,7 +393,7 @@ class AI(object):
         for action in actions:
             beforeMoveBoard = copy.deepcopy(self.GameBoard.board)
             self.addNewNum(action) # perform computer's action
-            (playerScore, playerAction) = self.maxieMoveAlphaBetaImportance(depth-1, alpha, beta, importance)
+            (playerScore, playerAction) = self.maxieMoveAlphaBetaImportance(depth, alpha, beta, importance)
             self.GameBoard.board = beforeMoveBoard
             self.GameBoard.score = originalScore
 
@@ -418,6 +406,10 @@ class AI(object):
         return (bestScore, bestAction)
 
     def getMaxMove3(self):
+        score, action = self.maxieMoveAlphaBetaImportance(4, -float('inf'), float('inf'), 5)
+        self.performAction(action)
+
+    def getMaxMove4(self):
         # (score, action) = self.expectiMaxieMove(3, 8)
         (score, action) = self.maxieMoveAlphaBetaImportance(5, -float('inf'), float('inf'), 12)
         # (score, action) = self.expectiMaxieMoveAlphaBeta(5, -float('inf'), float('inf'))
@@ -425,7 +417,7 @@ class AI(object):
         # print("bestScore, bestAction:", (score, action))
         self.performAction(action)
 
-    def getMaxMove4(self):
+    def getMaxMove5(self):
         # apply deep reinforcement learning
         print("有时间一定会做的")
         raise NotImplementedError
@@ -445,34 +437,34 @@ class AI(object):
             self.GameBoard.printBoard()
             print("current score: ", self.GameBoard.score)
             print("------------------------------------------------\n\n")
-        if self.GameBoard.contains2048(): return 1, self.GameBoard.score
+        if self.GameBoard.reaches2048(): return 1, self.GameBoard.score
         else: return 0, self.GameBoard.score
 
 # test
 if __name__ == "__main__":
-    # novice AI play 100 times
-    record = []
-    scores = []
-    for i in range(100):
-        testBoard = Board(4)
-        noviceAI = AI(testBoard, 0)
-        res = noviceAI.playTheGame()
-        record.append(res[0])
-        scores.append(res[1])
-    print("Novice AI:")
-    print("record:", record)
-    print("scores:", scores)
-    avgscore = sum(scores)/len(scores)
-    print("average score: ", avgscore)
-    winrate = sum(record)/len(record)
-    print("winrate: ", winrate)
+    # # novice AI play 100 times
+    # record = []
+    # scores = []
+    # for i in range(100):
+    #     testBoard = Board(4)
+    #     noviceAI = AI(testBoard, 0)
+    #     res = noviceAI.playTheGame()
+    #     record.append(res[0])
+    #     scores.append(res[1])
+    # print("Novice AI:")
+    # print("record:", record)
+    # print("scores:", scores)
+    # avgscore = sum(scores)/len(scores)
+    # print("average score: ", avgscore)
+    # winrate = sum(record)/len(record)
+    # print("winrate: ", winrate)
 
-    # competent AI play 100 times
+    # competent AI play 20 times
     record = []
     scores = []
-    for i in range(100):
+    for i in range(20):
         testBoard = Board(4)
-        competentAI = AI(testBoard, 1)
+        competentAI = AI(testBoard, 2)
         res = competentAI.playTheGame()
         record.append(res[0])
         scores.append(res[1])
@@ -484,22 +476,22 @@ if __name__ == "__main__":
     winrate = sum(record)/len(record)
     print("winrate: ", winrate)
 
-    # proficient AI play 20 times
-    record = []
-    scores = []
-    for i in range(20):
-        testBoard = Board(4)
-        competentAI = AI(testBoard, 2)
-        res = competentAI.playTheGame()
-        record.append(res[0])
-        scores.append(res[1])
-    print("Proficient AI:")
-    print("record:", record)
-    print("scores:", scores)
-    avgscore = sum(scores)/len(scores)
-    print("average score: ", avgscore)
-    winrate = sum(record)/len(record)
-    print("winrate: ", winrate)
+    # # proficient AI play 20 times
+    # record = []
+    # scores = []
+    # for i in range(20):
+    #     testBoard = Board(4)
+    #     competentAI = AI(testBoard, 2)
+    #     res = competentAI.playTheGame()
+    #     record.append(res[0])
+    #     scores.append(res[1])
+    # print("Proficient AI:")
+    # print("record:", record)
+    # print("scores:", scores)
+    # avgscore = sum(scores)/len(scores)
+    # print("average score: ", avgscore)
+    # winrate = sum(record)/len(record)
+    # print("winrate: ", winrate)
 
 
 

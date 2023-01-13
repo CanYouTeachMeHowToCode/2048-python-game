@@ -131,10 +131,10 @@ class Board(object):
         self.rotate180()
         return canMove
 
-    def contains2048(self):
+    def reaches2048(self): # have numbers greater than or equal to 2048
         for i in range(self.size):
             for j in range(self.size):
-                if self.board[i][j] == 2048: 
+                if self.board[i][j] >= 2048: 
                     return True
         return False
 
@@ -145,7 +145,7 @@ class Board(object):
         originalScore = self.score
 
         # the player get 2048
-        if self.contains2048():
+        if self.reaches2048():
             print("\nCongratulations! you get 2048 and win!\n")
             # return True
 
