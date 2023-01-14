@@ -405,12 +405,11 @@ class AI(object):
         return (bestScore, bestAction)
 
     def getMaxMove3(self):
-        score, action = self.maxieMoveAlphaBetaImportance(4, -float('inf'), float('inf'), 5)
+        score, action = self.maxieMoveAlphaBetaImportance(4, -float('inf'), float('inf'), 4)
         self.performAction(action)
 
     def getMaxMove4(self):
         # (score, action) = self.expectiMaxieMove(3, 8)
-        (score, action) = self.maxieMoveAlphaBetaImportance(5, -float('inf'), float('inf'), 12)
         # (score, action) = self.expectiMaxieMoveAlphaBeta(5, -float('inf'), float('inf'))
 
         # print("bestScore, bestAction:", (score, action))
@@ -457,25 +456,25 @@ if __name__ == "__main__":
     # winrate = sum(record)/len(record)
     # print("winrate: ", winrate)
 
-    # advanced beginner AI plays 100 times
-    startTime = time.time()
-    winLose, record, scores = [], [], []
-    for i in range(100):
-        testBoard = Board(4)
-        competentAI = AI(testBoard, 1)
-        res = competentAI.playTheGame()
-        winLose.append(res[0])
-        record.append(res[1])
-        scores.append(res[2])
-    print("Advanced Beginner AI:")
-    print("winLose: ", winLose)
-    print("record:", record)
-    print("scores:", scores)
-    avgscore = sum(scores)/len(scores)
-    print("average score: ", avgscore)
-    winrate = sum(winLose)/len(record)
-    print("winrate: ", winrate)
-    print("--- %s seconds ---" % (time.time()-startTime))
+    # # advanced beginner AI plays 100 times
+    # startTime = time.time()
+    # winLose, record, scores = [], [], []
+    # for i in range(100):
+    #     testBoard = Board(4)
+    #     competentAI = AI(testBoard, 1)
+    #     res = competentAI.playTheGame()
+    #     winLose.append(res[0])
+    #     record.append(res[1])
+    #     scores.append(res[2])
+    # print("Advanced Beginner AI:")
+    # print("winLose: ", winLose)
+    # print("record:", record)
+    # print("scores:", scores)
+    # avgscore = sum(scores)/len(scores)
+    # print("average score: ", avgscore)
+    # winrate = sum(winLose)/len(record)
+    # print("winrate: ", winrate)
+    # print("--- %s seconds ---" % (time.time()-startTime))
 
 
     # competent AI plays 20 times
