@@ -21,7 +21,7 @@ class Board(object):
         self.board[startIndex[0]][startIndex[1]] = startNum
 
     def printBoard(self):
-        print("current board:\n")
+        print("\ncurrent board:")
         print(self.board)
         print("\n")
 

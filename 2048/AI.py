@@ -3,6 +3,7 @@
 import random
 import copy
 import math
+import time
 from board import Board
 
 class AI(object):
@@ -173,14 +174,8 @@ class AI(object):
     Reference: https://stackoverflow.com/questions/22342854/what-is-the-optimal-algorithm-for-the-game-2048/22389702#22389702
     '''
 
+    """
     ## ExpectiMax
-
-    # the method for computer that does not add the numbers "normally" -- add the number based on the current game board situation
-    def addNewNum(self, action):  
-        index = action[0]
-        addNum = action[1]
-        assert(self.GameBoard.board[index[0]][index[1]] == 0)
-        self.GameBoard.board[index[0]][index[1]] = addNum
 
     # player's move
     def expectiMaxieMove(self, depth, importance):
@@ -319,6 +314,7 @@ class AI(object):
                 if (alpha >= beta) : break
 
         return (bestScore, bestAction)
+    """
 
     # importance pruning: only take the computer's actions that affect the player's next move most negatively based on the weight of the empty tiles on the board. 
     # Reference : http://cs229.stanford.edu/proj2016/report/NieHouAn-AIPlays2048-report.pdf
@@ -330,13 +326,16 @@ class AI(object):
     then it considers no more than 3 empty tiles at one layer down; in the last but one layer it would consider at most one empty tile.
     '''
 
-    # the function to get most important tiles for computer's actions 
+    # the method for computer that does not add the numbers "normally" -- add the number based on the current game board situation
+    def addNewNum(self, action):  
+        index = action[0]
+        addNum = action[1]
+        assert(self.GameBoard.board[index[0]][index[1]] == 0)
+        self.GameBoard.board[index[0]][index[1]] = addNum
 
+    # the method to get most important tiles for computer's actions 
     def getImporantTiles(self, importance): # importance => number of important tiles we consider (in current layer)
-        emptyTiles = [] # tuple list => empty tile coordinates
-        for i in range(self.size):
-            for j in range(self.size):
-                if not self.GameBoard.board[i][j]: emptyTiles.append((i, j))
+        emptyTiles = self.GameBoard.findAllEmptyTiles()
         importantTiles = sorted(emptyTiles, key=lambda coord:self.weightBoard[coord[0]][coord[1]], reverse=True)[:importance] # len(importantTiles) == importance
         return importantTiles
 
@@ -437,12 +436,11 @@ class AI(object):
             self.GameBoard.printBoard()
             print("current score: ", self.GameBoard.score)
             print("------------------------------------------------\n\n")
-        if self.GameBoard.reaches2048(): return 1, self.GameBoard.score
-        else: return 0, self.GameBoard.score
+        return int(self.GameBoard.reaches2048()), self.GameBoard.getLargestTileNumber(), self.GameBoard.score
 
 # test
 if __name__ == "__main__":
-    # # novice AI play 100 times
+    # # novice AI plays 100 times
     # record = []
     # scores = []
     # for i in range(100):
@@ -459,22 +457,48 @@ if __name__ == "__main__":
     # winrate = sum(record)/len(record)
     # print("winrate: ", winrate)
 
-    # competent AI play 20 times
-    record = []
-    scores = []
-    for i in range(20):
+    # advanced beginner AI plays 100 times
+    startTime = time.time()
+    winLose, record, scores = [], [], []
+    for i in range(100):
         testBoard = Board(4)
-        competentAI = AI(testBoard, 2)
+        competentAI = AI(testBoard, 1)
         res = competentAI.playTheGame()
-        record.append(res[0])
-        scores.append(res[1])
-    print("Competent AI:")
+        winLose.append(res[0])
+        record.append(res[1])
+        scores.append(res[2])
+    print("Advanced Beginner AI:")
+    print("winLose: ", winLose)
     print("record:", record)
     print("scores:", scores)
     avgscore = sum(scores)/len(scores)
     print("average score: ", avgscore)
-    winrate = sum(record)/len(record)
+    winrate = sum(winLose)/len(record)
     print("winrate: ", winrate)
+    print("--- %s seconds ---" % (time.time()-startTime))
+
+
+    # competent AI plays 20 times
+    startTime = time.time()
+    winLose, record, scores = [], [], []
+    for i in range(20):
+        currTrialStartTime = time.time()
+        testBoard = Board(4)
+        competentAI = AI(testBoard, 2)
+        res = competentAI.playTheGame()
+        winLose.append(res[0])
+        record.append(res[1])
+        scores.append(res[2])
+        print("---Current trial time: %s seconds ---" % (time.time()-currTrialStartTime))
+    print("Competent AI:")
+    print("winLose: ", winLose)
+    print("record:", record)
+    print("scores:", scores)
+    avgscore = sum(scores)/len(scores)
+    print("average score: ", avgscore)
+    winrate = sum(winLose)/len(record)
+    print("winrate: ", winrate)
+    print("---Total time: %s seconds ---" % (time.time()-startTime))
 
     # # proficient AI play 20 times
     # record = []
