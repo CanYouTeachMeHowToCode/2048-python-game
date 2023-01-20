@@ -342,20 +342,18 @@ class AI(object):
     # player's move with alpha-beta pruning & importance pruning
     def maxieMoveAlphaBetaImportance(self, depth, alpha, beta, importance):
         assert(alpha < beta)
-        if not depth: return (self.evaluate(), None) # depth = 0
+        if not depth: return self.evaluate(), None # depth = 0
 
         # get all legal actions and preserve the board
         originalScore = self.GameBoard.score
         actions = self.getLegalMoves()
+        if not actions: return self.evaluate(), None # no legal actions, means player loses => computer wins
 
-        if not actions: return (self.evaluate(), None) # no legal actions
-
-        (bestScore, bestAction) = (-float('inf'), None)
-
+        bestScore, bestAction = float('-inf'), None
         for action in actions:
             beforeMoveBoard = copy.deepcopy(self.GameBoard.board)
             self.performAction(action)
-            (computerScore, computerAction) = self.minnieMoveAlphaBetaImportance(depth-1, alpha, beta, importance-1)
+            computerScore, computerAction = self.minnieMoveAlphaBetaImportance(depth-1, alpha, beta, importance-1)
             self.GameBoard.board = beforeMoveBoard
             self.GameBoard.score = originalScore
 
@@ -365,12 +363,12 @@ class AI(object):
                 alpha = max(alpha, bestScore)
                 if (alpha >= beta): break
 
-        return (bestScore, bestAction)
+        return bestScore, bestAction
 
     # computer's move with alpha-beta pruning & importance pruning
     def minnieMoveAlphaBetaImportance(self, depth, alpha, beta, importance):
         assert(alpha < beta)
-        if not depth: return (self.evaluate(), None) # depth = 0
+        if not depth: return self.evaluate(), None # depth = 0
 
         originalScore = self.GameBoard.score
         # even though the real computer will put the new numbers randomly,
@@ -384,15 +382,14 @@ class AI(object):
             # can add 2 or 4 on any empty tile
             actions.append((index, 2))
             actions.append((index, 4))
+        
+        if not actions: return bestScore, bestAction 
 
-        if not actions: return (self.evaluate(), None) # no legal actions
-
-        (bestScore, bestAction) = (float('inf'), None)
-
+        bestScore, bestAction = self.evaluate(), None
         for action in actions:
             beforeMoveBoard = copy.deepcopy(self.GameBoard.board)
             self.addNewNum(action) # perform computer's action
-            (playerScore, playerAction) = self.maxieMoveAlphaBetaImportance(depth, alpha, beta, importance)
+            playerScore, playerAction = self.maxieMoveAlphaBetaImportance(depth, alpha, beta, importance)
             self.GameBoard.board = beforeMoveBoard
             self.GameBoard.score = originalScore
 
@@ -402,10 +399,11 @@ class AI(object):
                 beta = min(beta, bestScore)
                 if (alpha >= beta) : break
 
-        return (bestScore, bestAction)
+        return bestScore, bestAction
 
     def getMaxMove3(self):
         score, action = self.maxieMoveAlphaBetaImportance(4, -float('inf'), float('inf'), 4)
+        print("bestScore: {score}, bestAction: {action}".format(score=score, action=self.GameBoard.directionList[action]))
         self.performAction(action)
 
     def getMaxMove4(self):
@@ -426,10 +424,10 @@ class AI(object):
         print("start board: ", end = "")
         self.GameBoard.printBoard()
         while not self.GameBoard.GameOver():
-            print("-------------------------------board before move:")
-            self.GameBoard.printBoard()
             step += 1
             print("step:%d\n" % step)
+            print("-------------------------------board before move:")
+            self.GameBoard.printBoard()
             self.nextMove()
             print("\n-----------------------------board after move:")
             self.GameBoard.printBoard()

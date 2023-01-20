@@ -118,13 +118,12 @@ class Board(object):
 
     # the game is over once the player reach the number 2048 or 
     # cannot make any legal move on the board
-    def GameOver(self):
-        # board = copy.deepcopy(self.board)
+    def GameOver(self, verbose=True):
         originalScore = self.score
 
         # the player get 2048
         if self.reaches2048():
-            print("\nCongratulations! you get 2048 and win!\n")
+            if verbose: print("\nCongratulations! you get 2048 and win!\n")
             # return True
 
         # the player cannot make any legal move before getting 2048
@@ -150,7 +149,7 @@ class Board(object):
         self.score = originalScore
 
         if not (canMoveUp or canMoveDown or canMoveLeft or canMoveRight):
-            print("\nYou don't have any legal moves! Game Over!") 
+            if verbose: print("\nYou don't have any legal moves! Game Over!") 
             return True
         else: return False
 
