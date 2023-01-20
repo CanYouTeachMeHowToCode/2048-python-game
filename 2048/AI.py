@@ -383,7 +383,7 @@ class AI(object):
             actions.append((index, 2))
             actions.append((index, 4))
         
-        if not actions: return bestScore, bestAction 
+        if not actions: return self.evaluate(), None
 
         bestScore, bestAction = self.evaluate(), None
         for action in actions:
