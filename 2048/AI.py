@@ -385,7 +385,7 @@ class AI(object):
         
         if not actions: return self.evaluate(), None
 
-        bestScore, bestAction = self.evaluate(), None
+        bestScore, bestAction = float('inf'), None
         for action in actions:
             beforeMoveBoard = copy.deepcopy(self.GameBoard.board)
             self.addNewNum(action) # perform computer's action
