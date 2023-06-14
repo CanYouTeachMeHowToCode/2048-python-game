@@ -2,7 +2,6 @@
 
 import random
 import copy
-import math
 import time
 from board import Board
 
@@ -122,6 +121,7 @@ class AI(object):
             elif score == bestScore:
                 bestActions.append(action)
 
+        legalMoves = self.getLegalMoves()
         bestAction = random.choice(bestActions) if bestActions else random.choice(legalMoves)
         print("action: %d\n" % bestAction)
         self.performAction(bestAction)
@@ -161,6 +161,7 @@ class AI(object):
             elif score == bestScore:
                 bestActions.append(action)
 
+        legalMoves = self.getLegalMoves()
         bestAction = random.choice(bestActions) if bestActions else random.choice(legalMoves)
         print("action: %d\n" % bestAction)
         self.performAction(bestAction)
@@ -411,7 +412,8 @@ class AI(object):
         # (score, action) = self.expectiMaxieMoveAlphaBeta(5, -float('inf'), float('inf'))
 
         # print("bestScore, bestAction:", (score, action))
-        self.performAction(action)
+        # self.performAction(action)
+        pass
 
     def getMaxMove5(self):
         # apply deep reinforcement learning
