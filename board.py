@@ -4,7 +4,7 @@ import random
 import copy
 import numpy as np
 
-class Board(object):
+class Board():
     def __init__(self, size=4):
         # size default set to 4, but can be customized
         self.empty = 0 # 0 represents empty grid
@@ -17,7 +17,6 @@ class Board(object):
         startIndex = (random.randint(0, size-1), random.randint(0, size-1)) 
         # start number can be 2 or 4, 2 occurs 80% and 4 occurs 20%
         startNum = random.choice([2, 2, 2, 2, 2, 2, 2, 2, 4, 4])
-
         self.board[startIndex[0]][startIndex[1]] = startNum
 
     def printBoard(self):
@@ -62,14 +61,18 @@ class Board(object):
 
                 # move numbers to left all empty tiles on the left
                 nums = list(filter(lambda x: x != self.empty, self.board[row]))
-                newRow = nums + [0] * (self.size - len(nums))
+                newRow = nums + [0]*(self.size-len(nums))
                 self.board[row] = newRow
 
         # return False if this move cannot be processed (i.e. the board after moving is the same as the original one), else return True
         return not self.isSameBoard(check, self.board)
- 
-    # if we rotate the board 90˚ clockwise, move left and rotate 90° counterclockwise back, the new board is equivalent to the original board move down.
-
+    
+    '''
+    If we rotate the board 90˚ clockwise, move left and rotate 90° counterclockwise back, 
+    the new board is equivalent to the original board moving down. With this trick, we can
+    only use rotate and move left to implement move down, move up and move right.
+    '''
+    
     # rotate the board 90° clockwise is equivalent to transpose the board and mirror the board along the vertical axis
     def transpose(self):
         self.board = np.transpose(self.board)
@@ -82,13 +85,12 @@ class Board(object):
         self.mirror()
 
     def rotate180(self):
-        self.transpose()
-        self.mirror()
-        self.transpose()
-        self.mirror()
+        for _ in range(2):
+            self.transpose()
+            self.mirror()
 
     def rotate90CounterClockwise(self):
-        for i in range(3):
+        for _ in range(3):
             self.transpose()
             self.mirror()
 
@@ -115,10 +117,13 @@ class Board(object):
 
     def getLargestTileNumber(self): 
         return np.amax(self.board)
-
-    # the game is over once the player reach the number 2048 or 
-    # cannot make any legal move on the board
-    def GameOver(self, verbose=True):
+    
+    '''
+    The game is over once the player cannot make any legal move on the board or
+    reach the number 2048 (edit: reach 2048 does not necessarily win the game, the
+    player decides whether to continue the game or not)
+    '''
+    def gameOver(self, verbose=True):
         originalScore = self.score
 
         # the player get 2048
@@ -182,74 +187,3 @@ class Board(object):
                 print("Game Over!\n")
                 break
         print("reach here after game is over!")
-
-
-# test 
-if __name__ == "__main__":
-    board = Board(4)
-    board.printBoard()
-    board.addNewTile()
-    board.printBoard()
-    board.addNewTile()
-    board.addNewTile()
-    board.addNewTile()
-    board.addNewTile()
-    board.addNewTile()
-    board.printBoard()
-    print("after moving left:")
-    board.moveLeft()
-    board.printBoard()
-
-    board1 = copy.deepcopy(board)
-    print("-----------after transpose:")
-    board1.transpose()
-    board1.printBoard()
-    print("after mirror:")
-    board1.mirror()
-    board1.printBoard()
-
-    print("------------after rotation:")
-    board.rotate90Clockwise()
-    board.printBoard()
-
-    print("------------rotate back:")
-    board.rotate90CounterClockwise()
-    board.printBoard()
-
-    print("after moving down:")
-    board.moveDown()
-    board.printBoard()
-
-    print("after moving up:")
-    board.moveUp()
-    board.printBoard()
-
-    print("after moving right:")
-    board.moveRight()
-    board.printBoard()
-
-    print("game over tests:")
-    # test with infinite random moves
-    board = Board(6)
-    while not board.GameOver():
-        canMove = False
-        direction = random.choice(board.directionList)
-        print("direction:", direction)
-        if direction == "Up": 
-            canMoveUp = board.moveUp()
-            canMove = canMoveUp
-        elif direction == "Down":
-            canMoveDown = board.moveDown()
-            canMove = canMoveDown
-        elif direction == "Left":
-            canMoveLeft = board.moveLeft()
-            canMove = canMoveLeft
-        elif direction == "Right":
-            canMoveRight = board.moveRight()
-            canMove = canMoveRight
-        # add a new number after each legal move
-        if canMove: board.addNewTile() 
-        else: print("cannot move in this direction") 
-        board.printBoard()
-
-

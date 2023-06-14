@@ -1,7 +1,7 @@
 ## 2048 game
 from UI import UI
 
-class Game(object):
+class Game():
     def __init__(self):
         self.GameUI = UI()
 

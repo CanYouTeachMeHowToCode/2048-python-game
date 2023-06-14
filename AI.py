@@ -5,7 +5,7 @@ import copy
 import time
 from board import Board
 
-class AI(object):
+class AI():
     def __init__(self, GameBoard, level):
         self.size = GameBoard.size
         self.GameBoard = GameBoard

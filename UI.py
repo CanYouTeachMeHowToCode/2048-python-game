@@ -3,12 +3,10 @@ from tkinter import *
 from board import Board
 from AI import AI
 
-import copy
 import string
 import sys
-import time
 
-class UI(object):
+class UI():
     def __init__(self):
         self.GameBoard = Board(4) # default board size is 4
 
@@ -153,7 +151,7 @@ class UI(object):
             if data.AImode: pass
             else:
                 # making moves based on the user's pressing keys
-                if not self.GameBoard.GameOver():
+                if not self.GameBoard.gameOver():
                     if self.GameBoard.reaches2048(): 
                         data.reach2048 = True
                         if not data.continuePlaying: data.inGame = False
@@ -344,7 +342,7 @@ class UI(object):
 
             if data.AImode:
                 data.timerDelay = 200
-                if not self.GameBoard.GameOver():
+                if not self.GameBoard.gameOver():
                     # move twice in each timer delay period
                     self.AImove(data)
                 else:
