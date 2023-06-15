@@ -19,3 +19,6 @@ jobs:
     
     - name: Testing
       run: make test
+    
+    - name: Refactoring
+      run: make refactor
