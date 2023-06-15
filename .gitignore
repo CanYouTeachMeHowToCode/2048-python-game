@@ -1,9 +1,13 @@
-#ignore huggingface
+# Mac OS
+.DS_Store
+
+# ignore huggingface
 summarizeApp
-#ignore fine-tuning
+
+# ignore fine-tuning
 test_trainer/
 
-#ignore pytorch artifacts
+# ignore pytorch artifacts
 data
 model.pth
 

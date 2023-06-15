@@ -128,11 +128,22 @@ def test_reaches2048():
                                  [64, 128, 8, 16],
                                  [8, 256, 128, 2048]])
     assert testBoard2.reaches2048() 
-                                 
+
+def test_score():
+    testBoard = createTestBoard()
+    origScore = testBoard.score
+    testBoard.moveDown()
+    assert testBoard.score == origScore+20
 
 def test_getLargestTileNumber():
     testBoard = createTestBoard()
     assert testBoard.getLargestTileNumber() == 256
+    testBoard2 = Board()
+    testBoard2.board = np.array([[4, 2, 4, 2],
+                                 [4, 2, 4, 8],
+                                 [64, 128, 8, 16],
+                                 [8, 256, 128, 2048]])
+    assert testBoard2.getLargestTileNumber() == 2048
 
 # a 2048 game board that game over (cannot move in any direction)
 def createTestBoard2():
