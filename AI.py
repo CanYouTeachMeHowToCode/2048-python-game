@@ -1,8 +1,8 @@
 ## 2048 game AI
-
 import random
 import copy
 import time
+import numpy as np
 from board import Board
 
 
@@ -39,7 +39,7 @@ class AI:
                 for col in range(size):
                     exp = board[row][col]
                     board[row][col] = 4**exp
-            return board
+            return np.array(board)
 
         self.weightBoard = weightBoard1(self.size)
 
@@ -148,11 +148,7 @@ class AI:
     """
 
     def evaluate(self):
-        score = 0
-        for row in range(self.size):
-            for col in range(self.size):
-                score += self.weightBoard[row][col] * self.GameBoard.board[row][col]
-        return score
+        return np.multiply(self.weightBoard, self.GameBoard.board).sum()
 
     # Advanced Beginner AI: greedy search based on game board scores with weights
     def getMaxMove2(self):
@@ -183,156 +179,6 @@ class AI:
         self.performAction(bestAction)
 
     ### ExpectiMax & miniMax algorithm.
-    # Reference: http://cs229.stanford.edu/proj2016/report/NieHouAn-AIPlays2048-report.pdf
-
-    """
-    2021.12.22 update: we should consider the number of merges for each move and the 
-    number of empty tiles after each move of the player to be as many as possible in favor of the next move
-    Reference: https://stackoverflow.com/questions/22342854/what-is-the-optimal-algorithm-for-the-game-2048/22389702#22389702
-    """
-
-    """
-    ## ExpectiMax
-
-    # player's move
-    def expectiMaxieMove(self, depth, importance):
-        if not depth: return (self.evaluate(), None) # depth = 0
-
-        # get all legal actions and preserve the board
-        originalScore = self.GameBoard.score
-
-        actions = self.getLegalMoves()
-
-        if not actions: return (self.evaluate(), None) # no legal actions
-
-        (bestScore, bestAction) = (-float('inf'), None)
-
-        for action in actions:
-            beforeMoveBoard = copy.deepcopy(self.GameBoard.board)
-            self.performAction(action)
-            computerScore = self.expectiMinnieScore(depth, importance)
-            self.GameBoard.board = beforeMoveBoard
-            self.GameBoard.score = originalScore
-
-            if computerScore > bestScore:
-                bestScore = computerScore
-                bestAction = action
-
-        return (bestScore, bestAction)
-
-    # computer's move
-    def expectiMinnieScore(self, depth, importance):
-        if not depth: return (self.evaluate(), None) # depth = 0
-
-        originalScore = self.GameBoard.score
-
-        # even though the real computer will put the new numbers randomly,
-        # we still assume that it can put 2 or 4 on any empty tile as it 
-        # wishes to make the board harder for player to solve.
-
-        importantIndices = self.getImporantIndices(importance)
-        emptyTiles = [] # tuple list => empty tile coordinates
-        for i in range(self.size):
-            for j in range(self.size):
-                # this tile is empty and is "important"
-                if not self.GameBoard.board[i][j] and (i, j) in importantIndices: 
-                    emptyTiles.append((i, j))
-        actions = []
-        for index in emptyTiles:
-            # can add 2 or 4 on any empty tile
-            actions.append((index, 2))
-            actions.append((index, 4))
-
-        if not actions: return self.evaluate() # no legal actions
-
-        expectedScore = 0
-
-        for action in actions:
-            addNum = action[1]
-            if addNum == 2: prob = 0.8
-            elif addNum == 4: prob = 0.2
-            else: assert(False) # should not reach here
-
-            beforeMoveBoard = copy.deepcopy(self.GameBoard.board)
-            self.addNewNum(action) # perform computer's action
-            (playerScore, _) = self.expectiMaxieMove(depth-1, importance)
-            self.GameBoard.board = beforeMoveBoard
-            self.GameBoard.score = originalScore
-
-            expectedScore += playerScore * prob
-
-        return expectedScore
-
-    ## Minimax with alpha-beta pruning
-    # player's move with alpha-beta pruning
-    def maxieMoveAlphaBeta(self, depth, alpha, beta):
-        assert(alpha < beta)
-        if not depth: return (self.evaluate(), None) # depth = 0
-
-        # get all legal actions and preserve the board
-        originalScore = self.GameBoard.score
-        actions = self.getLegalMoves()
-
-        if not actions: return (self.evaluate(), None) # no legal actions
-
-        (bestScore, bestAction) = (-float('inf'), None)
-
-        for action in actions:
-            beforeMoveBoard = copy.deepcopy(self.GameBoard.board)
-            self.performAction(action)
-            (computerScore, computerAction) = self.minnieMoveAlphaBeta(depth-1, alpha, beta)
-            self.GameBoard.board = beforeMoveBoard
-            self.GameBoard.score = originalScore
-
-            if computerScore > bestScore:
-                bestScore = computerScore
-                bestAction = action
-                alpha = max(alpha, bestScore)
-                if (alpha >= beta): break
-
-        return (bestScore, bestAction)
-
-    # computer's move with alpha-beta pruning
-    def minnieMoveAlphaBeta(self, depth, alpha, beta):
-        assert(alpha < beta)
-        if not depth: return (self.evaluate(), None) # depth = 0
-
-        originalScore = self.GameBoard.score
-        # even though the real computer will put the new numbers randomly,
-        # we still assume that it can put 2 or 4 on any empty tile as it 
-        # wishes to make the board harder for player to solve.
-        emptyTiles = [] # tuple list => empty tile coordinates
-        for i in range(self.size):
-            for j in range(self.size):
-                if not self.GameBoard.board[i][j]: # this tile is empty
-                    emptyTiles.append((i, j))
-
-        actions = []
-        for index in emptyTiles:
-            # can add 2 or 4 on any empty tile
-            actions.append((index, 2))
-            actions.append((index, 4))
-
-        if not actions: return (self.evaluate(), None) # no legal actions
-
-        (bestScore, bestAction) = (float('inf'), None)
-
-        for action in actions:
-            beforeMoveBoard = copy.deepcopy(self.GameBoard.board)
-            self.addNewNum(action) # perform computer's action
-            (playerScore, playerAction) = self.maxieMoveAlphaBeta(depth-1, alpha, beta)
-            self.GameBoard.board = beforeMoveBoard
-            self.GameBoard.score = originalScore
-
-            if playerScore < bestScore:
-                bestScore = playerScore
-                bestAction = action
-                beta = min(beta, bestScore)
-                if (alpha >= beta) : break
-
-        return (bestScore, bestAction)
-    """
-
     """
     Importance pruning: only take the computer's actions that affect the player's next move most negatively based on the weight of the empty tiles on the board.
     Reference : http://cs229.stanford.edu/proj2016/report/NieHouAn-AIPlays2048-report.pdf
@@ -459,11 +305,10 @@ class AI:
     """
 
     def evaluate2(self):
-        score = 0
-        for row in range(self.size):
-            for col in range(self.size):
-                score += self.weightBoard[row][col] * self.GameBoard.board[row][col]
-        return self.GameBoard.score * score
+        return (
+            self.GameBoard.score
+            * np.multiply(self.weightBoard, self.GameBoard.board).sum()
+        )
 
     def getMaxMove4(self):
         score, action = self.maxieMoveAlphaBetaImportance(
@@ -542,45 +387,21 @@ if __name__ == "__main__":
     # print("winrate: ", winrate)
     # print("--- %s seconds ---" % (time.time()-startTime))
 
-    # competent AI plays 20 times
-    startTime = time.time()
-    winLose, record, scores = [], [], []
-    for i in range(20):
-        currTrialStartTime = time.time()
-        testBoard = Board(4)
-        competentAI = AI(testBoard, 2)
-        res = competentAI.playTheGame()
-        winLose.append(res[0])
-        record.append(res[1])
-        scores.append(res[2])
-        print(
-            "---Current trial time: %s seconds ---" % (time.time() - currTrialStartTime)
-        )
-    print("Competent AI:")
-    print("winLose: ", winLose)
-    print("record:", record)
-    print("scores:", scores)
-    avgscore = sum(scores) / len(scores)
-    print("average score: ", avgscore)
-    winrate = sum(winLose) / len(record)
-    print("winrate: ", winrate)
-    print("---Total time: %s seconds ---" % (time.time() - startTime))
-
-    # # proficient AI play 20 times
+    # # competent AI plays 20 times
     # startTime = time.time()
     # winLose, record, scores = [], [], []
     # for i in range(20):
     #     currTrialStartTime = time.time()
     #     testBoard = Board(4)
-    #     proficientAI = AI(testBoard, 3)
-    #     res = proficientAI.playTheGame()
+    #     competentAI = AI(testBoard, 2)
+    #     res = competentAI.playTheGame()
     #     winLose.append(res[0])
     #     record.append(res[1])
     #     scores.append(res[2])
     #     print(
     #         "---Current trial time: %s seconds ---" % (time.time() - currTrialStartTime)
     #     )
-    # print("Proficient AI:")
+    # print("Competent AI:")
     # print("winLose: ", winLose)
     # print("record:", record)
     # print("scores:", scores)
@@ -589,3 +410,27 @@ if __name__ == "__main__":
     # winrate = sum(winLose) / len(record)
     # print("winrate: ", winrate)
     # print("---Total time: %s seconds ---" % (time.time() - startTime))
+
+    # proficient AI play 20 times
+    startTime = time.time()
+    winLose, record, scores = [], [], []
+    for i in range(20):
+        currTrialStartTime = time.time()
+        testBoard = Board(4)
+        proficientAI = AI(testBoard, 3)
+        res = proficientAI.playTheGame()
+        winLose.append(res[0])
+        record.append(res[1])
+        scores.append(res[2])
+        print(
+            "---Current trial time: %s seconds ---" % (time.time() - currTrialStartTime)
+        )
+    print("Proficient AI:")
+    print("winLose: ", winLose)
+    print("record:", record)
+    print("scores:", scores)
+    avgscore = sum(scores) / len(scores)
+    print("average score: ", avgscore)
+    winrate = sum(winLose) / len(record)
+    print("winrate: ", winrate)
+    print("---Total time: %s seconds ---" % (time.time() - startTime))
