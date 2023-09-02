@@ -18,7 +18,7 @@ class AI:
             "expert",
         ][level]
 
-        '''
+        """
         Weight board assign the grids on board with weight
         in zigzag order increasing exponentially with base 4
         e.g. for a weight board with size 4, the board weight is
@@ -28,8 +28,8 @@ class AI:
          [4^15, 4^14,  4^13, 4^12]]
 
         Reference: http://cs229.stanford.edu/proj2016/report/NieHouAn-AIPlays2048-report.pdf
-        '''
-        
+        """
+
         def weightBoard1(size):
             board = [[(row * size + col) for col in range(size)] for row in range(size)]
             for row in range(size):
@@ -405,11 +405,11 @@ class AI:
             return evalFunc(), None  # depth = 0
 
         originalScore = self.GameBoard.score
-        '''
+        """
         Even though the real computer will put the new numbers randomly,
         we still assume that it can put 2 or 4 on any empty tile as it
         wishes to make the board harder for player to solve.
-        '''
+        """
 
         # mark the empty tiles with highest importances as "important"
         importantTiles = self.getImporantTiles(importance)
@@ -457,6 +457,7 @@ class AI:
     the product of the current board score and the sum of the product of weight of a certain tile and the number on it. 
     (i.e. GameBoard.score * ∑(row)∑(col) weightBoard[row][col] * GameBoard[row][col])
     """
+
     def evaluate2(self):
         score = 0
         for row in range(self.size):
