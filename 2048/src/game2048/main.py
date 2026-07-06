@@ -1,5 +1,5 @@
 ## 2048 game
-from UI import UI
+from .UI import UI
 
 class Game(object):
     def __init__(self):
@@ -8,5 +8,8 @@ class Game(object):
     def run2048Game(self):
         self.GameUI.runGame(600, 750)
 
-if __name__ == "__main__":
+def main():
     Game().run2048Game()
+
+if __name__ == "__main__":
+    main()

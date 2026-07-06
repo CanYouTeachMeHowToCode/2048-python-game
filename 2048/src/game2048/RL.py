@@ -10,7 +10,7 @@ from torch import nn
 import torch.nn.functional as F
 import numpy as np
 
-from board import Board
+from .board import Board
 
 # Reference: https://github.com/navjindervirdee/2048-deep-reinforcement-learning
 # for deep reinforcement learning: currently only consider board with size 4 (can be improved later)

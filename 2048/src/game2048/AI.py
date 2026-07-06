@@ -3,7 +3,7 @@
 import random
 import copy
 import math
-from board import Board
+from .board import Board
 
 class AI(object):
     def __init__(self, GameBoard, level):
@@ -439,59 +439,4 @@ class AI(object):
             print("------------------------------------------------\n\n")
         if self.GameBoard.reaches2048(): return 1, self.GameBoard.score
         else: return 0, self.GameBoard.score
-
-# test
-if __name__ == "__main__":
-    # # novice AI play 100 times
-    # record = []
-    # scores = []
-    # for i in range(100):
-    #     testBoard = Board(4)
-    #     noviceAI = AI(testBoard, 0)
-    #     res = noviceAI.playTheGame()
-    #     record.append(res[0])
-    #     scores.append(res[1])
-    # print("Novice AI:")
-    # print("record:", record)
-    # print("scores:", scores)
-    # avgscore = sum(scores)/len(scores)
-    # print("average score: ", avgscore)
-    # winrate = sum(record)/len(record)
-    # print("winrate: ", winrate)
-
-    # competent AI play 20 times
-    record = []
-    scores = []
-    for i in range(20):
-        testBoard = Board(4)
-        competentAI = AI(testBoard, 2)
-        res = competentAI.playTheGame()
-        record.append(res[0])
-        scores.append(res[1])
-    print("Competent AI:")
-    print("record:", record)
-    print("scores:", scores)
-    avgscore = sum(scores)/len(scores)
-    print("average score: ", avgscore)
-    winrate = sum(record)/len(record)
-    print("winrate: ", winrate)
-
-    # # proficient AI play 20 times
-    # record = []
-    # scores = []
-    # for i in range(20):
-    #     testBoard = Board(4)
-    #     competentAI = AI(testBoard, 2)
-    #     res = competentAI.playTheGame()
-    #     record.append(res[0])
-    #     scores.append(res[1])
-    # print("Proficient AI:")
-    # print("record:", record)
-    # print("scores:", scores)
-    # avgscore = sum(scores)/len(scores)
-    # print("average score: ", avgscore)
-    # winrate = sum(record)/len(record)
-    # print("winrate: ", winrate)
-
-
 
